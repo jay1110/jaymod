@@ -126,6 +126,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && format('dev-{0}', github.run_number) || github.ref_name }}
+          name: ${{ github.event_name == 'workflow_dispatch' && format('Development Build #{0}', github.run_number) || github.ref_name }}
           prerelease: ${{ github.event_name == 'workflow_dispatch' }}
           generate_release_notes: true
           files: |
