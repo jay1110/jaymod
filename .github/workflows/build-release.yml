@@ -35,11 +35,14 @@ jobs:
       - name: Build Linux 64-bit
         run: PLATFORM=linux64 make release
       
-      - name: Upload Linux 64-bit .so
+      - name: Upload Linux 64-bit artifacts
         uses: actions/upload-artifact@v4
         with:
           name: xmod-linux64
-          path: build.linux64-release/game/qagame.mp.x86_64.so
+          path: |
+            build.linux64-release/game/qagame.mp.x86_64.so
+            build.linux64-release/cgame/cgame.mp.x86_64.so
+            build.linux64-release/ui/ui.mp.x86_64.so
 
   build-linux32:
     runs-on: ubuntu-latest
@@ -54,11 +57,14 @@ jobs:
       - name: Build Linux 32-bit
         run: PLATFORM=linux make release
       
-      - name: Upload Linux 32-bit .so
+      - name: Upload Linux 32-bit artifacts
         uses: actions/upload-artifact@v4
         with:
           name: xmod-linux32
-          path: build.linux-release/game/qagame.mp.i386.so
+          path: |
+            build.linux-release/game/qagame.mp.i386.so
+            build.linux-release/cgame/cgame.mp.i386.so
+            build.linux-release/ui/ui.mp.i386.so
 
   build-windows:
     runs-on: ubuntu-latest
@@ -76,19 +82,25 @@ jobs:
       - name: Build Windows 64-bit
         run: PLATFORM=mingw64 make release
       
-      - name: Upload Windows 32-bit .dll
+      - name: Upload Windows 32-bit artifacts
         uses: actions/upload-artifact@v4
         with:
           name: xmod-windows32
-          path: build.mingw-release/game/qagame_mp_x86.dll
+          path: |
+            build.mingw-release/game/qagame_mp_x86.dll
+            build.mingw-release/cgame/cgame_mp_x86.dll
+            build.mingw-release/ui/ui_mp_x86.dll
       
-      - name: Upload Windows 64-bit .dll
+      - name: Upload Windows 64-bit artifacts
         uses: actions/upload-artifact@v4
         with:
           name: xmod-windows64
-          path: build.mingw64-release/game/qagame_mp_x86_64.dll
+          path: |
+            build.mingw64-release/game/qagame_mp_x86_64.dll
+            build.mingw64-release/cgame/cgame_mp_x86_64.dll
+            build.mingw64-release/ui/ui_mp_x86_64.dll
 
-  build-pk3:
+  build-pak-data:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -98,20 +110,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential python3 zip m4
       
-      - name: Build pk3 file
-        run: PLATFORM=linux64 make pkg
+      - name: Build pak data files
+        run: PLATFORM=linux64 make pak
       
-      - name: List build output
-        run: find build.linux64 -type f | head -50
-      
-      - name: Upload pk3 file
+      - name: Upload pak data
         uses: actions/upload-artifact@v4
         with:
-          name: xmod-pk3
-          path: build.linux64/xmod-2.0.0/xmod-2.0.0.pk3
+          name: xmod-pak-data
+          path: build.linux64-release/pak/
 
   create-release:
-    needs: [build-linux64, build-linux32, build-windows, build-pk3]
+    needs: [build-linux64, build-linux32, build-windows, build-pak-data]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     steps:
@@ -125,30 +134,73 @@ jobs:
       - name: Create unified release package
         run: |
           mkdir -p release/xmod
+          mkdir -p pak-combined
           
           # Debug: Show artifact structure
           echo "=== Artifact structure ==="
           find artifacts -type f
           
-          # Copy all binaries to xmod folder
+          # === Create pk3 with all client-side binaries (cgame, ui) for all platforms ===
+          # Copy pak data files first
+          cp -r artifacts/xmod-pak-data/* pak-combined/
+          
+          # Add cgame and ui binaries from all platforms to pak
           # Linux 64-bit
-          find artifacts/xmod-linux64 -name "*.so" -exec cp {} release/xmod/ \; 2>/dev/null || true
+          find artifacts/xmod-linux64 -name "cgame*.so" -exec cp {} pak-combined/ \; 2>/dev/null || true
+          find artifacts/xmod-linux64 -name "ui*.so" -exec cp {} pak-combined/ \; 2>/dev/null || true
           
           # Linux 32-bit
-          find artifacts/xmod-linux32 -name "*.so" -exec cp {} release/xmod/ \; 2>/dev/null || true
+          find artifacts/xmod-linux32 -name "cgame*.so" -exec cp {} pak-combined/ \; 2>/dev/null || true
+          find artifacts/xmod-linux32 -name "ui*.so" -exec cp {} pak-combined/ \; 2>/dev/null || true
           
           # Windows 64-bit
-          find artifacts/xmod-windows64 -name "*.dll" -exec cp {} release/xmod/ \; 2>/dev/null || true
+          find artifacts/xmod-windows64 -name "cgame*.dll" -exec cp {} pak-combined/ \; 2>/dev/null || true
+          find artifacts/xmod-windows64 -name "ui*.dll" -exec cp {} pak-combined/ \; 2>/dev/null || true
           
           # Windows 32-bit
-          find artifacts/xmod-windows32 -name "*.dll" -exec cp {} release/xmod/ \; 2>/dev/null || true
+          find artifacts/xmod-windows32 -name "cgame*.dll" -exec cp {} pak-combined/ \; 2>/dev/null || true
+          find artifacts/xmod-windows32 -name "ui*.dll" -exec cp {} pak-combined/ \; 2>/dev/null || true
           
-          # pk3 file
-          find artifacts/xmod-pk3 -name "*.pk3" -exec cp {} release/xmod/ \; 2>/dev/null || true
+          echo "=== pak-combined contents ==="
+          ls -la pak-combined/
+          
+          # Create the pk3 file (contains all pak data + cgame/ui for all platforms)
+          cd pak-combined
+          zip -r ../release/xmod/xmod-2.0.0.pk3 *
+          cd ..
+          
+          # === Add all qagame (server-side) binaries to release folder ===
+          # Linux 64-bit qagame
+          find artifacts/xmod-linux64 -name "qagame*.so" -exec cp {} release/xmod/ \; 2>/dev/null || true
+          
+          # Linux 32-bit qagame
+          find artifacts/xmod-linux32 -name "qagame*.so" -exec cp {} release/xmod/ \; 2>/dev/null || true
+          
+          # Windows 64-bit qagame
+          find artifacts/xmod-windows64 -name "qagame*.dll" -exec cp {} release/xmod/ \; 2>/dev/null || true
+          
+          # Windows 32-bit qagame
+          find artifacts/xmod-windows32 -name "qagame*.dll" -exec cp {} release/xmod/ \; 2>/dev/null || true
+          
+          # === Add config files ===
+          # Copy mapscripts
+          mkdir -p release/xmod/mapscripts
+          cp -r pkg/mapscripts/* release/xmod/mapscripts/ 2>/dev/null || true
+          
+          # Copy README and config templates
+          cp pkg/README.txt.m4 release/xmod/README.txt 2>/dev/null || true
+          cp pkg/server.cfg.m4 release/xmod/server.cfg 2>/dev/null || true
+          cp pkg/jaymod.cfg.m4 release/xmod/xmod.cfg 2>/dev/null || true
+          
+          # Copy linux scripts
+          mkdir -p release/xmod/linux
+          cp pkg/linux/*.m4 release/xmod/linux/ 2>/dev/null || true
           
           # Show what we have in xmod folder
           echo "=== xmod folder contents ==="
           ls -la release/xmod/
+          echo "=== xmod/mapscripts contents ==="
+          ls -la release/xmod/mapscripts/ || true
           
           # Create single release zip
           cd release
@@ -157,6 +209,9 @@ jobs:
           # Show what we created
           echo "=== Release package contents ==="
           unzip -l xmod-2.0.0.zip
+          
+          echo "=== pk3 contents ==="
+          unzip -l xmod/xmod-2.0.0.pk3
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
