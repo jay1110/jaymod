@@ -88,29 +88,8 @@ jobs:
             build.mingw64/cgame/cgame_mp_x86_64.dll
             build.mingw64/ui/ui_mp_x86_64.dll
 
-  build-macos:
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install dependencies
-        run: |
-          brew install python3
-      
-      - name: Build macOS 64-bit
-        run: PLATFORM=osx64 make
-      
-      - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: jaymod-macos
-          path: |
-            build.osx64/game/qagame.mp.x86_64.dylib
-            build.osx64/cgame/cgame.mp.x86_64.dylib
-            build.osx64/ui/ui.mp.x86_64.dylib
-
   create-release:
-    needs: [build-linux64, build-linux32, build-windows, build-macos]
+    needs: [build-linux64, build-linux32, build-windows]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') || github.event.inputs.create_release == 'true'
     steps:
@@ -139,11 +118,6 @@ jobs:
           mkdir -p release/jaymod-windows
           cp artifacts/jaymod-windows/*.dll release/jaymod-windows/
           cd release && zip -r jaymod-windows.zip jaymod-windows && cd ..
-          
-          # macOS
-          mkdir -p release/jaymod-macos
-          cp artifacts/jaymod-macos/*.dylib release/jaymod-macos/
-          cd release && zip -r jaymod-macos.zip jaymod-macos && cd ..
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -154,6 +128,5 @@ jobs:
             release/jaymod-linux64.zip
             release/jaymod-linux32.zip
             release/jaymod-windows.zip
-            release/jaymod-macos.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
