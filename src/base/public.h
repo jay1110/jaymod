@@ -17,6 +17,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <cstdint>
 
 using namespace std;
 

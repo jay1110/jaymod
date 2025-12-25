@@ -207,8 +207,9 @@ void Sys_PumpEvents( void );
 
 //=============================================================
 
-
-typedef unsigned char 		byte;
+// Avoid conflict with std::byte in C++17
+typedef unsigned char 		qbyte;
+#define byte qbyte
 
 typedef enum {qfalse, qtrue}	qboolean;
 

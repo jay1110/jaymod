@@ -26,7 +26,7 @@ vmMain
 This is the only way control passes into the module.
 ================
 */
-extern "C" LF_PUBLIC int
+extern "C" LF_PUBLIC intptr_t
 vmMain( int cmd, 
             int arg0, 
             int arg1, 

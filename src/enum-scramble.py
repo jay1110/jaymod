@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 #
 
 import re
@@ -21,11 +21,11 @@ for arg in sys.argv[1:]:
     filename = arg
 
 if (mode == 0):
-    print 'ERROR: mode must be specified. Expecting one of { -h, -cpp }'
+    print('ERROR: mode must be specified. Expecting one of { -h, -cpp }')
     sys.exit(1)
 
 if (filename == ''):
-    print 'ERROR: input file must be specified.'
+    print('ERROR: input file must be specified.')
     sys.exit(1)
 
 ###############################################################################
@@ -49,4 +49,4 @@ if (mode == 2):
 fh.close()
 
 for line in items:
-    print line
+    print(line)

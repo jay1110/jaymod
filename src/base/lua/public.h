@@ -3,6 +3,7 @@
 
 #include <lua/lua.h>
 #include <lua/lauxlib.h>
+#include <lua/lualib.h>
 
 namespace lua {
 	#include <base/lua/LuaContext.h>

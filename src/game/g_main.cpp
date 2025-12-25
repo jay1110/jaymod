@@ -614,7 +614,7 @@ This is the only way control passes into the module.
 This must be the very first function compiled into the .q3vm file
 ================
 */
-extern "C" LF_PUBLIC int
+extern "C" LF_PUBLIC intptr_t
 vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6 ) {
 	switch ( command ) {
 	case GAME_INIT:
@@ -632,7 +632,7 @@ vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5,
 		{
 			static string msg;
 			if (ClientConnect( msg, arg0, (qboolean)arg1, (qboolean)arg2 ))
-				return (int)msg.c_str();
+				return reinterpret_cast<intptr_t>(msg.c_str());
 			else
 				return 0;
 		}

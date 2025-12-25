@@ -1,0 +1,32 @@
+include make/platform/linux64
+
+###############################################################################
+
+IDMODULE.suffix = _mp_x86_64.dll
+
+###############################################################################
+
+DYNLOAD.l  =
+MATH.l     =
+IPHLPAPI.l = iphlpapi
+ADVAPI.l   = advapi32
+
+###############################################################################
+
+# MinGW-w64 cross-compiler for Windows 64-bit
+# Install on Ubuntu/Debian: sudo apt-get install mingw-w64
+GCC/ = /usr/
+
+CXX = $(GCC/)bin/x86_64-w64-mingw32-g++
+AR  = /usr/bin/x86_64-w64-mingw32-ar
+
+CXX.opt.PIC =
+CXX.opt.vis =
+CXX.opt.BIT =
+
+CXX.ldopts.so = -shared
+
+###############################################################################
+
+SPECIALS.name  = win64
+SPECIALS.build = build.mingw64
