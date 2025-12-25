@@ -12,6 +12,9 @@ on:
         default: 'true'
         type: boolean
 
+permissions:
+  contents: write
+
 jobs:
   build-linux64:
     runs-on: ubuntu-latest
@@ -86,7 +89,7 @@ jobs:
             build.mingw64/ui/ui_mp_x86_64.dll
 
   build-macos:
-    runs-on: macos-latest
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
       
