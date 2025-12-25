@@ -4196,7 +4196,7 @@ static void CG_DrawNewCompass( void ) {
 			else
 				basey = ( basey + 128.f ) - ( ( cg.time - cgs.autoMapExpandTime - 150.f ) / 100.f ) * 128.f;
 		} else {
-			rectDef_t compassHintRect =	{ SCREEN_WIDTH - 22, 128, 20, 20 };
+			rectDef_t compassHintRect = { (float)(SCREEN_WIDTH - 22), 128.0f, 20.0f, 20.0f };
 
 			CG_DrawKeyHint( &compassHintRect, "+mapexpand" );
 		}
