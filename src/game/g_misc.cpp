@@ -535,8 +535,11 @@ void SP_misc_gamemodel( gentity_t *ent )
 			reverse = qtrue;
 		}
 
-		if( num_frames == 0 )
-			G_Error( "'misc_model' with ANIMATE spawnflag set has 'frames' set to 0\n" );
+		if( num_frames == 0 ) {
+			G_Printf( "^3WARNING: 'misc_gamemodel' with ANIMATE spawnflag set has 'frames' set to 0 at %s\n", vtos(ent->s.origin) );
+			G_FreeEntity( ent );
+			return;
+		}
 
 		ent->s.torsoAnim = num_frames;
 		ent->s.frame = rand() % ent->s.torsoAnim;

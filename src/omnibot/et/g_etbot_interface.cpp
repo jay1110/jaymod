@@ -4975,8 +4975,17 @@ int Bot_Interface_Init()
 	g_GoalSubmitReady = false;
 
 	g_InterfaceFunctions = new ETInterface;
+
+#if defined( JAYMOD_LINUX64 ) || defined( JAYMOD_ANDROID_X86_64 ) || defined( JAYMOD_WINDOWS64 ) || defined( JAYMOD_MINGW64 ) || defined( JAYMOD_OSX64 )
+	const char *omnibotLib = "omnibot_et.x86_64";
+#elif defined( JAYMOD_LINUX_AARCH64 ) || defined( JAYMOD_ANDROID_ARM64 )
+	const char *omnibotLib = "omnibot_et.aarch64";
+#else
+	const char *omnibotLib = "omnibot_et";
+#endif
+
 	eomnibot_error err = Omnibot_LoadLibrary(ET_VERSION_LATEST,
-		"omnibot_et", Omnibot_FixPath(g_OmniBotPath.string));
+		omnibotLib, Omnibot_FixPath(g_OmniBotPath.string));
 	if(err == BOT_ERROR_NONE)
 		return true;
 	return false;
