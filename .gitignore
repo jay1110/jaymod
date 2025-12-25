@@ -1,0 +1,32 @@
+# Build output directories
+build/
+build-*/
+build.*/
+
+# CodeQL artifacts
+_codeql_detected_source_root
+
+# Editor/IDE files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Object files
+*.o
+*.obj
+
+# Libraries
+*.a
+*.lib
+*.so
+*.dll
+*.dylib
+
+# Precompiled headers
+*.gch
+*.pch
+
+# Executables
+*.exe
