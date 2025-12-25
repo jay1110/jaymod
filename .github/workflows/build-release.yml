@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "**"
+    tags:
+      - "v*"
   pull_request:
     branches:
       - master
@@ -30,15 +32,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential python3 zip m4
       
-      - name: Build Linux 64-bit package
-        run: PLATFORM=linux64 make pkg
+      - name: Build Linux 64-bit
+        run: PLATFORM=linux64 make release
       
-      - name: Upload Linux 64-bit artifacts
+      - name: Upload Linux 64-bit .so
         uses: actions/upload-artifact@v4
         with:
-          name: jaymod-linux64
-          path: |
-            build.linux64/jaymod-*/
+          name: xmod-linux64
+          path: build.linux64-release/game/qagame.mp.x86_64.so
 
   build-linux32:
     runs-on: ubuntu-latest
@@ -50,15 +51,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential python3 gcc-multilib g++-multilib zip m4
       
-      - name: Build Linux 32-bit package
-        run: PLATFORM=linux make pkg
+      - name: Build Linux 32-bit
+        run: PLATFORM=linux make release
       
-      - name: Upload Linux 32-bit artifacts
+      - name: Upload Linux 32-bit .so
         uses: actions/upload-artifact@v4
         with:
-          name: jaymod-linux32
-          path: |
-            build.linux/jaymod-*/
+          name: xmod-linux32
+          path: build.linux-release/game/qagame.mp.i386.so
 
   build-windows:
     runs-on: ubuntu-latest
@@ -70,22 +70,48 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential python3 mingw-w64 zip m4
       
-      - name: Build Windows 32-bit package
-        run: PLATFORM=mingw make pkg
+      - name: Build Windows 32-bit
+        run: PLATFORM=mingw make release
       
-      - name: Build Windows 64-bit package
-        run: PLATFORM=mingw64 make pkg
+      - name: Build Windows 64-bit
+        run: PLATFORM=mingw64 make release
       
-      - name: Upload Windows artifacts
+      - name: Upload Windows 32-bit .dll
         uses: actions/upload-artifact@v4
         with:
-          name: jaymod-windows
-          path: |
-            build.mingw/jaymod-*/
-            build.mingw64/jaymod-*/
+          name: xmod-windows32
+          path: build.mingw-release/game/qagame_mp_x86.dll
+      
+      - name: Upload Windows 64-bit .dll
+        uses: actions/upload-artifact@v4
+        with:
+          name: xmod-windows64
+          path: build.mingw64-release/game/qagame_mp_x86_64.dll
+
+  build-pk3:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3 zip m4
+      
+      - name: Build pk3 file
+        run: PLATFORM=linux64 make pkg
+      
+      - name: List build output
+        run: find build.linux64 -type f | head -50
+      
+      - name: Upload pk3 file
+        uses: actions/upload-artifact@v4
+        with:
+          name: xmod-pk3
+          path: build.linux64/xmod-2.0.0/xmod-2.0.0.pk3
 
   create-release:
-    needs: [build-linux64, build-linux32, build-windows]
+    needs: [build-linux64, build-linux32, build-windows, build-pk3]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') || github.event.inputs.create_release == 'true'
     steps:
@@ -96,70 +122,41 @@ jobs:
         with:
           path: artifacts
       
-      - name: Create release packages
+      - name: Create unified release package
         run: |
-          mkdir -p release
+          mkdir -p release/xmod
           
           # Debug: Show artifact structure
           echo "=== Artifact structure ==="
-          find artifacts -type f | head -100
+          find artifacts -type f
           
-          # Linux 64-bit - copy the entire package directory
-          if [ -d artifacts/jaymod-linux64 ]; then
-            cd artifacts/jaymod-linux64
-            # Find the jaymod package directory and zip it
-            for dir in */; do
-              if [ -d "$dir" ]; then
-                zip -r "../../release/jaymod-linux64.zip" "$dir"
-                break
-              fi
-            done
-            cd ../..
-          fi
+          # Copy all binaries to xmod folder
+          # Linux 64-bit
+          find artifacts/xmod-linux64 -name "*.so" -exec cp {} release/xmod/ \; 2>/dev/null || true
           
           # Linux 32-bit
-          if [ -d artifacts/jaymod-linux32 ]; then
-            cd artifacts/jaymod-linux32
-            for dir in */; do
-              if [ -d "$dir" ]; then
-                zip -r "../../release/jaymod-linux32.zip" "$dir"
-                break
-              fi
-            done
-            cd ../..
-          fi
+          find artifacts/xmod-linux32 -name "*.so" -exec cp {} release/xmod/ \; 2>/dev/null || true
           
-          # Windows 32-bit and 64-bit
-          if [ -d artifacts/jaymod-windows ]; then
-            cd artifacts/jaymod-windows
-            # mingw (32-bit)
-            if [ -d "build.mingw" ]; then
-              cd build.mingw
-              for dir in */; do
-                if [ -d "$dir" ]; then
-                  zip -r "../../../release/jaymod-windows32.zip" "$dir"
-                  break
-                fi
-              done
-              cd ..
-            fi
-            # mingw64 (64-bit)
-            if [ -d "build.mingw64" ]; then
-              cd build.mingw64
-              for dir in */; do
-                if [ -d "$dir" ]; then
-                  zip -r "../../../release/jaymod-windows64.zip" "$dir"
-                  break
-                fi
-              done
-              cd ..
-            fi
-            cd ../..
-          fi
+          # Windows 64-bit
+          find artifacts/xmod-windows64 -name "*.dll" -exec cp {} release/xmod/ \; 2>/dev/null || true
+          
+          # Windows 32-bit
+          find artifacts/xmod-windows32 -name "*.dll" -exec cp {} release/xmod/ \; 2>/dev/null || true
+          
+          # pk3 file
+          find artifacts/xmod-pk3 -name "*.pk3" -exec cp {} release/xmod/ \; 2>/dev/null || true
+          
+          # Show what we have in xmod folder
+          echo "=== xmod folder contents ==="
+          ls -la release/xmod/
+          
+          # Create single release zip
+          cd release
+          zip -r xmod-2.0.0.zip xmod/
           
           # Show what we created
-          echo "=== Release packages ==="
-          ls -la release/
+          echo "=== Release package contents ==="
+          unzip -l xmod-2.0.0.zip
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -169,6 +166,6 @@ jobs:
           prerelease: ${{ github.event_name == 'workflow_dispatch' }}
           generate_release_notes: true
           files: |
-            release/*.zip
+            release/xmod-2.0.0.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
