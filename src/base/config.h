@@ -3,7 +3,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#if defined( JAYMOD_LINUX ) || defined( JAYMOD_LINUX64 )
+#if defined( JAYMOD_LINUX ) || defined( JAYMOD_LINUX64 ) || defined( JAYMOD_LINUX_AARCH64 )
 #    include <base/linux/public.h>
 #elif defined( JAYMOD_MINGW ) || defined( JAYMOD_MINGW64 )
 #    include <base/mingw/public.h>
@@ -11,6 +11,8 @@
 #    include <base/osx/public.h>
 #elif defined( JAYMOD_WINDOWS ) || defined( JAYMOD_WINDOWS64 )
 #    include <base/windows/public.h>
+#elif defined( JAYMOD_ANDROID_ARM64 ) || defined( JAYMOD_ANDROID_X86_64 ) || defined( JAYMOD_ANDROID_X86 )
+#    include <base/linux/public.h>
 #else
 #    error "JAYMOD platform is not defined."
 #endif
