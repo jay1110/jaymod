@@ -89,7 +89,7 @@ jobs:
             build.mingw64/ui/ui_mp_x86_64.dll
 
   build-macos:
-    runs-on: macos-13
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       
