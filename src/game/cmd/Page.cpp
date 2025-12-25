@@ -32,7 +32,7 @@ Page::doExecute( Context& txt )
     if (txt._args.size() == 1) {
         Buffer buf;
         buf << _name << ":"
-            << " You have " << xvalue( report.size() )
+            << " You have " << xvalue( static_cast<int>(report.size()) )
             << " page" << (report.size() == 1 ? "" : "s")
             << " available.";
         printChat( txt._client, buf );
@@ -54,7 +54,7 @@ Page::doExecute( Context& txt )
     print( txt._client, *report[num-1] );
 
     Buffer b( xcheader );
-    b << "--page " << xheaderBOLD( num ) << " of " << xheaderBOLD( report.size() );
+    b << "--page " << xheaderBOLD( num ) << " of " << xheaderBOLD( static_cast<int>(report.size()) );
     print( txt._client, b );
 
     return PA_NONE;
@@ -75,7 +75,7 @@ Page::report( Client* client, const Buffer& buffer )
     print( client, *report[0] );
 
     Buffer b( xcheader );
-    b << "--page " << xheaderBOLD( "1" ) << " of " << xheaderBOLD( report.size() );
+    b << "--page " << xheaderBOLD( "1" ) << " of " << xheaderBOLD( static_cast<int>(report.size()) );
     print( client, b );
 }
 

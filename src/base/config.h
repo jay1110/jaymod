@@ -3,7 +3,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#if defined( JAYMOD_LINUX )
+#if defined( JAYMOD_LINUX ) || defined( JAYMOD_LINUX64 )
 #    include <base/linux/public.h>
 #elif defined( JAYMOD_MINGW )
 #    include <base/mingw/public.h>
@@ -18,6 +18,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #if defined( __i386__ )
+#    define JAYMOD_LITTLE_ENDIAN
+#elif defined( __x86_64__ )
 #    define JAYMOD_LITTLE_ENDIAN
 #elif  defined( __ppc__ )
 #    define JAYMOD_BIG_ENDIAN
