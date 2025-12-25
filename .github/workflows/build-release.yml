@@ -12,6 +12,9 @@ on:
         default: 'true'
         type: boolean
 
+permissions:
+  contents: write
+
 jobs:
   build-linux64:
     runs-on: ubuntu-latest
