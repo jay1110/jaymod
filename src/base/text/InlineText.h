@@ -29,7 +29,7 @@ public:
     InlineText  ( const void* );
     InlineText  ( const char* );
     InlineText  ( const string& );
-#if defined( JAYMOD_OSX ) || defined( JAYMOD_OSX64 ) || defined( JAYMOD_LINUX64 ) || defined( JAYMOD_MINGW64 ) || defined( JAYMOD_WINDOWS64 ) || defined( JAYMOD_LINUX_AARCH64 ) || defined( JAYMOD_ANDROID_ARM64 ) || defined( JAYMOD_ANDROID_X86_64 )
+#if defined( JAYMOD_OSX ) || defined( JAYMOD_OSX64 ) || defined( JAYMOD_LINUX64 ) || defined( JAYMOD_WINDOWS64 ) || defined( JAYMOD_LINUX_AARCH64 ) || defined( JAYMOD_ANDROID_ARM64 ) || defined( JAYMOD_ANDROID_X86_64 )
     InlineText  ( size_t );
 #endif
     ~InlineText ( );
@@ -50,7 +50,7 @@ public:
     InlineText& operator() ( const void* );
     InlineText& operator() ( const char* );
     InlineText& operator() ( const string& );
-#if defined( JAYMOD_OSX ) || defined( JAYMOD_OSX64 ) || defined( JAYMOD_LINUX64 ) || defined( JAYMOD_MINGW64 ) || defined( JAYMOD_WINDOWS64 ) || defined( JAYMOD_LINUX_AARCH64 ) || defined( JAYMOD_ANDROID_ARM64 ) || defined( JAYMOD_ANDROID_X86_64 )
+#if defined( JAYMOD_OSX ) || defined( JAYMOD_OSX64 ) || defined( JAYMOD_LINUX64 ) || defined( JAYMOD_WINDOWS64 ) || defined( JAYMOD_LINUX_AARCH64 ) || defined( JAYMOD_ANDROID_ARM64 ) || defined( JAYMOD_ANDROID_X86_64 )
     InlineText& operator() ( size_t );
 #endif
 
