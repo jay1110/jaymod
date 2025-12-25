@@ -104,19 +104,23 @@ jobs:
         run: |
           mkdir -p release
           
+          # Debug: Show artifact structure
+          echo "=== Artifact structure ==="
+          find artifacts -type f -name "*.so" -o -name "*.dll" | head -50
+          
           # Linux 64-bit
           mkdir -p release/jaymod-linux64
-          cp artifacts/jaymod-linux64/*.so release/jaymod-linux64/
+          find artifacts/jaymod-linux64 -name "*.so" -exec cp {} release/jaymod-linux64/ \;
           cd release && zip -r jaymod-linux64.zip jaymod-linux64 && cd ..
           
           # Linux 32-bit
           mkdir -p release/jaymod-linux32
-          cp artifacts/jaymod-linux32/*.so release/jaymod-linux32/
+          find artifacts/jaymod-linux32 -name "*.so" -exec cp {} release/jaymod-linux32/ \;
           cd release && zip -r jaymod-linux32.zip jaymod-linux32 && cd ..
           
           # Windows
           mkdir -p release/jaymod-windows
-          cp artifacts/jaymod-windows/*.dll release/jaymod-windows/
+          find artifacts/jaymod-windows -name "*.dll" -exec cp {} release/jaymod-windows/ \;
           cd release && zip -r jaymod-windows.zip jaymod-windows && cd ..
       
       - name: Create GitHub Release
