@@ -13,7 +13,12 @@ ADVAPI.l   = advapi32
 
 ###############################################################################
 
-GCC/ = /opt/gcc-4.1.2-mingw/i686-mingw32/
+# MinGW-w64 cross-compiler for Windows 32-bit
+# Install on Ubuntu/Debian: sudo apt-get install mingw-w64
+GCC/ = /usr/
+
+CXX = $(GCC/)bin/i686-w64-mingw32-g++
+AR  = /usr/bin/i686-w64-mingw32-ar
 
 CXX.opt.PIC =
 CXX.opt.vis =
