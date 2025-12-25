@@ -41,7 +41,7 @@ CXX.opt.W      = -Wall -Winvalid-pch -Wno-write-strings
 CXX.opt.g      = -g
 CXX.opt.pipe   = -pipe
 CXX.opt.p      = -p
-CXX.opt.static = -static-libgcc
+CXX.opt.static = -static-libgcc -static-libstdc++
 CXX.opt.std    = -fno-exceptions -fno-rtti
 
 CXX.ldopts.exe =
@@ -65,7 +65,7 @@ CXX.W      = 1
 CXX.g      =
 CXX.pipe   = 1
 CXX.p      =
-CXX.static =
+CXX.static = 1
 CXX.std    = 1
 CXX.vis    =
 
