@@ -5,11 +5,11 @@
 
 #if defined( JAYMOD_LINUX ) || defined( JAYMOD_LINUX64 )
 #    include <base/linux/public.h>
-#elif defined( JAYMOD_MINGW )
+#elif defined( JAYMOD_MINGW ) || defined( JAYMOD_MINGW64 )
 #    include <base/mingw/public.h>
 #elif defined( JAYMOD_OSX )
 #    include <base/osx/public.h>
-#elif defined( JAYMOD_WINDOWS )
+#elif defined( JAYMOD_WINDOWS ) || defined( JAYMOD_WINDOWS64 )
 #    include <base/windows/public.h>
 #else
 #    error "JAYMOD platform is not defined."
@@ -19,7 +19,7 @@
 
 #if defined( __i386__ )
 #    define JAYMOD_LITTLE_ENDIAN
-#elif defined( __x86_64__ )
+#elif defined( __x86_64__ ) || defined( _M_X64 )
 #    define JAYMOD_LITTLE_ENDIAN
 #elif  defined( __ppc__ )
 #    define JAYMOD_BIG_ENDIAN

@@ -207,7 +207,7 @@ InlineText::InlineText( const string& v )
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#if defined( JAYMOD_OSX ) || defined( JAYMOD_LINUX64 )
+#if defined( JAYMOD_OSX ) || defined( JAYMOD_LINUX64 ) || defined( JAYMOD_MINGW64 ) || defined( JAYMOD_WINDOWS64 )
 InlineText::InlineText( size_t v )
     : color     ( xcnone )
     , flags     ( ios::fixed )
@@ -217,7 +217,7 @@ InlineText::InlineText( size_t v )
 {   
     operator()( v );
 }   
-#endif // JAYMOD_OSX || JAYMOD_LINUX64
+#endif // JAYMOD_OSX || JAYMOD_LINUX64 || JAYMOD_MINGW64 || JAYMOD_WINDOWS64
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -419,7 +419,7 @@ InlineText::operator()( const string& v )
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#if defined( JAYMOD_OSX ) || defined( JAYMOD_LINUX64 )
+#if defined( JAYMOD_OSX ) || defined( JAYMOD_LINUX64 ) || defined( JAYMOD_MINGW64 ) || defined( JAYMOD_WINDOWS64 )
 InlineText&
 InlineText::operator()( size_t v )
 {
@@ -428,7 +428,7 @@ InlineText::operator()( size_t v )
     compute( vss.str() );
     return *this;
 }
-#endif // JAYMOD_OSX || JAYMOD_LINUX64
+#endif // JAYMOD_OSX || JAYMOD_LINUX64 || JAYMOD_MINGW64 || JAYMOD_WINDOWS64
 
 ///////////////////////////////////////////////////////////////////////////////
 
