@@ -96,9 +96,9 @@ jobs:
         with:
           name: xmod-windows64
           path: |
-            build.mingw64-release/game/qagame_mp_x86_64.dll
-            build.mingw64-release/cgame/cgame_mp_x86_64.dll
-            build.mingw64-release/ui/ui_mp_x86_64.dll
+            build.mingw64-release/game/qagame_mp_x64.dll
+            build.mingw64-release/cgame/cgame_mp_x64.dll
+            build.mingw64-release/ui/ui_mp_x64.dll
 
   build-pak-data:
     runs-on: ubuntu-latest
