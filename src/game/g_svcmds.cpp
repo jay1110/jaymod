@@ -5,6 +5,7 @@
 
 #include <bgame/impl.h>
 #include <omnibot/et/g_etbot_interface.h>
+#include <game/g_lua.h>
 
 /*
 ==============================================================================
@@ -1115,6 +1116,22 @@ qboolean	ConsoleCommand( void ) {
 
 	if (Q_stricmp (cmd, "bot") == 0) {
 		Bot_Interface_ConsoleCommand();
+		return qtrue;
+	}
+
+	// Lua commands
+	if (!Q_stricmp(cmd, "lua_status")) {
+		G_LuaStatus(NULL);
+		return qtrue;
+	}
+
+	if (!Q_stricmp(cmd, "lua_restart")) {
+		G_LuaRestart();
+		return qtrue;
+	}
+
+	if (!Q_stricmp(cmd, "lua_shutdown")) {
+		G_LuaShutdown();
 		return qtrue;
 	}
 
