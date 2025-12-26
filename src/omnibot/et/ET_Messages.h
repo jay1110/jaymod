@@ -1,22 +1,10 @@
-////////////////////////////////////////////////////////////////////////////////
-// 
-// $LastChangedBy: drevil $
-// $LastChangedDate: 2009-05-03 23:56:13 -0700 (Sun, 03 May 2009) $
-// $LastChangedRevision: 4069 $
-//
-// Title: TF Message Structure Definitions
-//
-////////////////////////////////////////////////////////////////////////////////
-
 #ifndef __TF_MESSAGES_H__
 #define __TF_MESSAGES_H__
 
-#include <omnibot/common/Base_Messages.h>
+#include "../common/Base_Messages.h"
 
-#ifdef _MSC_VER
 #pragma pack(push)
 #pragma pack(4)
-#endif
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -235,7 +223,7 @@ struct ET_CvarSet
 
 struct ET_CvarGet
 {
-	char *		m_Cvar;
+	const  char *		m_Cvar;
 	int			m_Value;
 };
 
@@ -244,8 +232,6 @@ struct ET_DisableBotPush
 	int			m_Push;
 };
 
-#ifdef _MSC_VER
 #pragma pack(pop)
-#endif
 
 #endif

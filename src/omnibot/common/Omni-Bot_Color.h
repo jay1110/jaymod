@@ -1,15 +1,7 @@
-////////////////////////////////////////////////////////////////////////////////
-// 
-// $LastChangedBy: drevil $
-// $LastChangedDate: 2009-05-16 18:53:18 -0700 (Sat, 16 May 2009) $
-// $LastChangedRevision: 4155 $
-//
-////////////////////////////////////////////////////////////////////////////////
-
 #ifndef __OMNICOLOR_H__
 #define __OMNICOLOR_H__
 
-#include <omnibot/common/Omni-Bot_BasicTypes.h>
+#include "Omni-Bot_BasicTypes.h"
 
 // class: obColor
 //		Helper class for defining color values.
@@ -60,6 +52,7 @@ public:
 	inline obColor fade(obuint8 _a) const { obColor c(cdata.m_RGBAi); c.cdata.m_RGBA[3]=_a; return c; }
 
 	inline obint32 rgba() const { return cdata.m_RGBAi; }
+	inline obint32 argb() const { return obColor( a(), r(), g(), b() ); }
 private:
 	union cdatatype
 	{

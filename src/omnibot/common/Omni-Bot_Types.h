@@ -1,15 +1,7 @@
-////////////////////////////////////////////////////////////////////////////////
-// 
-// $LastChangedBy: drevil $
-// $LastChangedDate: 2010-04-24 20:51:13 -0700 (Sat, 24 Apr 2010) $
-// $LastChangedRevision: 4828 $
-//
-////////////////////////////////////////////////////////////////////////////////
-
 #ifndef __OMNIBOT_TYPES_H__
 #define __OMNIBOT_TYPES_H__
 
-#include <omnibot/common/Omni-Bot_BasicTypes.h>
+#include "Omni-Bot_BasicTypes.h"
 
 // constants: Omni-bot Errors
 //		BOT_ERROR_NONE - No error
@@ -524,6 +516,7 @@ typedef enum eButtonFlags
 	BOT_BUTTON_AIM,
 	BOT_BUTTON_RESPAWN,
 	BOT_BUTTON_TAUNT,
+	BOT_BUTTON_THROWKNIFE,
 
 	// THIS MUST BE LAST
 	BOT_BUTTON_FIRSTUSER
@@ -767,12 +760,14 @@ typedef enum eNavigatorID
 {
 	NAVID_NONE,	
 	NAVID_WP,	
+#if ENABLE_PATH_PLANNERS
 	NAVID_NAVMESH,
 	NAVID_FLOODFILL,
 	NAVID_RECAST,
 
 	// THIS MUST BE LAST
 	NAVID_MAX
+#endif
 } NavigatorID;
 
 // enumerations: TraceMasks
@@ -1089,6 +1084,31 @@ typedef struct MapGoalDef_t
 #endif
 } MapGoalDef;
 
+// struct: MapGoalDef71
+typedef struct MapGoalDef71_t
+{
+	enum { BufferSize = 64 };
+
+	GameEntity		m_Entity;
+	int				m_GoalType;
+	int				m_Team;
+	char			m_TagName[BufferSize];
+	obUserData		m_UserData;
+
+#ifdef __cplusplus
+
+	void Reset()
+	{
+		m_Entity.Reset();
+		m_GoalType = 0;
+		m_Team = 0;
+		m_TagName[0] = 0;
+		m_UserData = obUserData();
+	}
+	MapGoalDef71_t() { Reset(); }
+#endif
+} MapGoalDef71;
+
 // struct: AutoNavFeature
 typedef struct AutoNavFeature_t
 {
@@ -1122,6 +1142,11 @@ typedef enum ePlayerState
 	S_PLAYED_WAITING_NEXTROUND,	// Player waiting on on the next round. Died or something.
 	S_PLAYER_PLAYING			// Player is good to go, and fully joined.
 } PlayerState;
+
+typedef enum eRole
+{
+	ROLE_INFILTRATOR = 3,
+} Role;
 
 // enumerations: FlagState
 //		S_FLAG_NOT_A_FLAG - The entity isn't a flag. Typically an error condition.

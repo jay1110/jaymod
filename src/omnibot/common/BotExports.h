@@ -1,22 +1,12 @@
-////////////////////////////////////////////////////////////////////////////////
-// 
-// $LastChangedBy: DrEvil $
-// $LastChangedDate: 2007-05-16 16:53:29 -0700 (Wed, 16 May 2007) $
-// $LastChangedRevision: 1924 $
-//
-// Title: BotExports
-//		In order for the game to call functions from the bot, we must export
-//		the functions to the game itself and allow it to call them. 
-//
-////////////////////////////////////////////////////////////////////////////////
-
+//In order for the game to call functions from the bot, we must export
+//the functions to the game itself and allow it to call them. 
 #ifndef __BOTEXPORTS_H__
 #define __BOTEXPORTS_H__
 
-#include <omnibot/common/Functions_Bot.h>
-#include <omnibot/common/Omni-Bot_Types.h>
-#include <omnibot/common/Omni-Bot_Events.h>
-#include <omnibot/common/IEngineInterface.h>
+#include "Functions_Bot.h"
+#include "Omni-Bot_Types.h"
+#include "Omni-Bot_Events.h"
+#include "IEngineInterface.h"
 
 //////////////////////////////////////////////////////////////////////////
 // Export the function on platforms that require it.
@@ -28,6 +18,8 @@
 
 // Typedef for the only exported bot function.
 typedef eomnibot_error (*pfnGetFunctionsFromDLL)(Bot_EngineFuncs_t *_pBotFuncs, int _size);
+
+typedef eomnibot_error(*pfnGetClientFunctionsFromDLL)(IClientInterface **_pClientFuncs, int _version);
 
 // note: Export Functions with C Linkage
 //	Export with C Linkage so the game interface can acccess it easier.

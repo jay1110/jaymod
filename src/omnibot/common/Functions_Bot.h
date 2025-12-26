@@ -1,19 +1,11 @@
-////////////////////////////////////////////////////////////////////////////////
-// 
-// $LastChangedBy: drevil $
-// $LastChangedDate: 2009-02-08 23:38:11 -0800 (Sun, 08 Feb 2009) $
-// $LastChangedRevision: 3917 $
-//
-////////////////////////////////////////////////////////////////////////////////
-
 #ifndef __FUNCTIONS_BOT_H__
 #define __FUNCTIONS_BOT_H__
 
-#include <omnibot/common/Omni-Bot.h>
-#include <omnibot/common/Omni-Bot_Types.h>
-#include <omnibot/common/Omni-Bot_Events.h>
-#include <omnibot/common/MessageHelper.h>
-#include <omnibot/common/IEngineInterface.h>
+#include "Omni-Bot.h"
+#include "Omni-Bot_Types.h"
+#include "Omni-Bot_Events.h"
+#include "MessageHelper.h"
+#include "IEngineInterface.h"
 
 // Title: Functions Bot
 
@@ -40,6 +32,23 @@ typedef struct
 	void (*pfnDeleteGoal)(const char *goalname);
 	void (*pfnUpdateEntity)(GameEntity oldent,GameEntity newent);
 } Bot_EngineFuncs_t;
+
+typedef struct
+{
+	omnibot_error(*pfnInitialize)(IEngineInterface71 *_pEngineFuncs, int _version);
+	void(*pfnUpdate)();
+	void(*pfnShutdown)();
+	void(*pfnConsoleCommand)(const Arguments &_args);
+	void(*pfnAddGoal)(const MapGoalDef71 &goaldef);
+	void(*pfnSendTrigger)(const TriggerInfo &_triggerInfo);
+	void(*pfnAddBlackboardRecord)(BlackBoard_Key _type, int _posterID, int _targetID, obUserData *_data);
+	void(*pfnBotEntityAdded)(GameEntity _ent, EntityInfo *_info);
+	void(*pfnSendEvent)(int _dest, const MessageHelper &_message);
+	void(*pfnSendGlobalEvent)(const MessageHelper &_message);
+	void(*pfnUpdateEntity)(GameEntity oldent, GameEntity newent);
+	void(*pfnDeleteGoal)(const char *goalname);
+} Bot_EngineFuncs71_t;
+
 
 //#define DllExport __declspec( dllexport )
 //

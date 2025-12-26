@@ -1,17 +1,7 @@
-////////////////////////////////////////////////////////////////////////////////
-// 
-// $LastChangedBy: drevil $
-// $LastChangedDate: 2010-02-09 21:32:10 -0800 (Tue, 09 Feb 2010) $
-// $LastChangedRevision: 4671 $
-//
-// Title: ET Config
-//
-////////////////////////////////////////////////////////////////////////////////
-
 #ifndef __ET_CONFIG_H__
 #define __ET_CONFIG_H__
 
-#include <omnibot/common/Omni-Bot_Events.h>
+#include "../common/Omni-Bot_Events.h"
 
 typedef enum eET_Version
 {
