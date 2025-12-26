@@ -2,8 +2,14 @@ name: Build and Release
 
 on:
   push:
+    branches:
+      - "**"
     tags:
-      - 'v*'
+      - "v*"
+  pull_request:
+    branches:
+      - master
+      - main
   workflow_dispatch:
     inputs:
       create_release:
@@ -24,19 +30,19 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential python3
+          sudo apt-get install -y build-essential python3 zip m4
       
       - name: Build Linux 64-bit
-        run: PLATFORM=linux64 make
+        run: PLATFORM=linux64 make release
       
       - name: Upload Linux 64-bit artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: jaymod-linux64
+          name: xmod-linux64
           path: |
-            build.linux64/game/qagame.mp.x86_64.so
-            build.linux64/cgame/cgame.mp.x86_64.so
-            build.linux64/ui/ui.mp.x86_64.so
+            build.linux64-release/game/qagame.mp.x86_64.so
+            build.linux64-release/cgame/cgame.mp.x86_64.so
+            build.linux64-release/ui/ui.mp.x86_64.so
 
   build-linux32:
     runs-on: ubuntu-latest
@@ -46,19 +52,19 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential python3 gcc-multilib g++-multilib
+          sudo apt-get install -y build-essential python3 gcc-multilib g++-multilib zip m4
       
       - name: Build Linux 32-bit
-        run: PLATFORM=linux make
+        run: PLATFORM=linux make release
       
       - name: Upload Linux 32-bit artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: jaymod-linux32
+          name: xmod-linux32
           path: |
-            build.linux/game/qagame.mp.i386.so
-            build.linux/cgame/cgame.mp.i386.so
-            build.linux/ui/ui.mp.i386.so
+            build.linux-release/game/qagame.mp.i386.so
+            build.linux-release/cgame/cgame.mp.i386.so
+            build.linux-release/ui/ui.mp.i386.so
 
   build-windows:
     runs-on: ubuntu-latest
@@ -68,51 +74,70 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential python3 mingw-w64
+          sudo apt-get install -y build-essential python3 mingw-w64 zip m4
       
       - name: Build Windows 32-bit
-        run: PLATFORM=mingw make
+        run: PLATFORM=mingw make release
       
       - name: Build Windows 64-bit
-        run: PLATFORM=mingw64 make
+        run: PLATFORM=mingw64 make release
       
-      - name: Upload Windows artifacts
+      - name: Upload Windows 32-bit artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: jaymod-windows
+          name: xmod-windows32
           path: |
-            build.mingw/game/qagame_mp_x86.dll
-            build.mingw/cgame/cgame_mp_x86.dll
-            build.mingw/ui/ui_mp_x86.dll
-            build.mingw64/game/qagame_mp_x86_64.dll
-            build.mingw64/cgame/cgame_mp_x86_64.dll
-            build.mingw64/ui/ui_mp_x86_64.dll
+            build.mingw-release/game/qagame_mp_x86.dll
+            build.mingw-release/cgame/cgame_mp_x86.dll
+            build.mingw-release/ui/ui_mp_x86.dll
+      
+      - name: Upload Windows 64-bit artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: xmod-windows64
+          path: |
+            build.mingw64-release/game/qagame_mp_x86_64.dll
+            build.mingw64-release/cgame/cgame_mp_x86_64.dll
+            build.mingw64-release/ui/ui_mp_x86_64.dll
 
-  build-macos:
-    runs-on: macos-15
+  build-pak-data:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       
       - name: Install dependencies
         run: |
-          brew install python3
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3 zip m4
       
-      - name: Build macOS 64-bit
-        run: PLATFORM=osx64 make
+      - name: Build pak data files
+        run: |
+          # pak data files are in the pak/ directory
+          # We need to collect all the raw data files (not cgame/ui, those come from other builds)
+          mkdir -p pak-data
+          
+          # Copy all pak resources directly
+          cp -r pak/* pak-data/
+          
+          # Remove build definition files from pak-data (they're not needed in release)
+          rm -f pak-data/pak.defs pak-data/pak.rules 2>/dev/null || true
+          
+          # Show what we collected
+          echo "=== Files collected for pak data ==="
+          find pak-data -type f | head -30
+          echo "Total files: $(find pak-data -type f | wc -l)"
       
-      - name: Upload macOS artifacts
+      - name: Upload pak data
         uses: actions/upload-artifact@v4
         with:
-          name: jaymod-macos
-          path: |
-            build.osx64/game/qagame.mp.x86_64.dylib
-            build.osx64/cgame/cgame.mp.x86_64.dylib
-            build.osx64/ui/ui.mp.x86_64.dylib
+          name: xmod-pak-data
+          path: pak-data/
+          if-no-files-found: warn
 
   create-release:
-    needs: [build-linux64, build-linux32, build-windows, build-macos]
+    needs: [build-linux64, build-linux32, build-windows, build-pak-data]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') || github.event.inputs.create_release == 'true'
+    if: always()
     steps:
       - uses: actions/checkout@v4
       
@@ -121,39 +146,109 @@ jobs:
         with:
           path: artifacts
       
-      - name: Create release packages
+      - name: Create unified release package
         run: |
-          mkdir -p release
+          mkdir -p release/xmod
+          mkdir -p pak-combined
           
+          # Debug: Show artifact structure
+          echo "=== Artifact structure ==="
+          find artifacts -type f
+          
+          # === Create pk3 with all client-side binaries (cgame, ui) for all platforms ===
+          # Copy pak data files first (if they exist)
+          if [ -d "artifacts/xmod-pak-data" ] && [ "$(ls -A artifacts/xmod-pak-data 2>/dev/null)" ]; then
+            cp -r artifacts/xmod-pak-data/* pak-combined/
+          fi
+          
+          # Add cgame and ui binaries from all platforms to pak
           # Linux 64-bit
-          mkdir -p release/jaymod-linux64
-          cp artifacts/jaymod-linux64/*.so release/jaymod-linux64/
-          cd release && zip -r jaymod-linux64.zip jaymod-linux64 && cd ..
+          find artifacts/xmod-linux64 -name "cgame*.so" -exec cp {} pak-combined/ \; 2>/dev/null || true
+          find artifacts/xmod-linux64 -name "ui*.so" -exec cp {} pak-combined/ \; 2>/dev/null || true
           
           # Linux 32-bit
-          mkdir -p release/jaymod-linux32
-          cp artifacts/jaymod-linux32/*.so release/jaymod-linux32/
-          cd release && zip -r jaymod-linux32.zip jaymod-linux32 && cd ..
+          find artifacts/xmod-linux32 -name "cgame*.so" -exec cp {} pak-combined/ \; 2>/dev/null || true
+          find artifacts/xmod-linux32 -name "ui*.so" -exec cp {} pak-combined/ \; 2>/dev/null || true
           
-          # Windows
-          mkdir -p release/jaymod-windows
-          cp artifacts/jaymod-windows/*.dll release/jaymod-windows/
-          cd release && zip -r jaymod-windows.zip jaymod-windows && cd ..
+          # Windows 64-bit
+          find artifacts/xmod-windows64 -name "cgame*.dll" -exec cp {} pak-combined/ \; 2>/dev/null || true
+          find artifacts/xmod-windows64 -name "ui*.dll" -exec cp {} pak-combined/ \; 2>/dev/null || true
           
-          # macOS
-          mkdir -p release/jaymod-macos
-          cp artifacts/jaymod-macos/*.dylib release/jaymod-macos/
-          cd release && zip -r jaymod-macos.zip jaymod-macos && cd ..
+          # Windows 32-bit
+          find artifacts/xmod-windows32 -name "cgame*.dll" -exec cp {} pak-combined/ \; 2>/dev/null || true
+          find artifacts/xmod-windows32 -name "ui*.dll" -exec cp {} pak-combined/ \; 2>/dev/null || true
+          
+          echo "=== pak-combined contents ==="
+          ls -la pak-combined/
+          
+          # Create the .dat file (marker file required by the mod)
+          touch pak-combined/xmod-2.0.0.dat
+          
+          # Create the pk3 file (contains all pak data + cgame/ui for all platforms)
+          cd pak-combined
+          if [ "$(ls -A 2>/dev/null)" ]; then
+            zip -r ../release/xmod/xmod-2.0.0.pk3 *
+          else
+            echo "WARNING: No pak data found to package!"
+          fi
+          cd ..
+          
+          # === Add all qagame (server-side) binaries to release folder ===
+          # Linux 64-bit qagame
+          find artifacts/xmod-linux64 -name "qagame*.so" -exec cp {} release/xmod/ \; 2>/dev/null || true
+          
+          # Linux 32-bit qagame
+          find artifacts/xmod-linux32 -name "qagame*.so" -exec cp {} release/xmod/ \; 2>/dev/null || true
+          
+          # Windows 64-bit qagame
+          find artifacts/xmod-windows64 -name "qagame*.dll" -exec cp {} release/xmod/ \; 2>/dev/null || true
+          
+          # Windows 32-bit qagame
+          find artifacts/xmod-windows32 -name "qagame*.dll" -exec cp {} release/xmod/ \; 2>/dev/null || true
+          
+          # === Add config files ===
+          # Copy mapscripts
+          mkdir -p release/xmod/mapscripts
+          cp -r pkg/mapscripts/* release/xmod/mapscripts/ 2>/dev/null || true
+          
+          # Copy README and config templates
+          cp pkg/README.txt.m4 release/xmod/README.txt 2>/dev/null || true
+          cp pkg/server.cfg.m4 release/xmod/server.cfg 2>/dev/null || true
+          cp pkg/jaymod.cfg.m4 release/xmod/xmod.cfg 2>/dev/null || true
+          
+          # Copy linux scripts
+          mkdir -p release/xmod/linux
+          cp pkg/linux/*.m4 release/xmod/linux/ 2>/dev/null || true
+          
+          # Show what we have in xmod folder
+          echo "=== xmod folder contents ==="
+          ls -la release/xmod/
+          echo "=== xmod/mapscripts contents ==="
+          ls -la release/xmod/mapscripts/ || true
+          
+          # Create single release zip
+          cd release
+          zip -r xmod-2.0.0.zip xmod/
+          
+          # Show what we created
+          echo "=== Release package contents ==="
+          unzip -l xmod-2.0.0.zip
+          
+          echo "=== pk3 contents ==="
+          if [ -f "xmod/xmod-2.0.0.pk3" ]; then
+            unzip -l xmod/xmod-2.0.0.pk3
+          else
+            echo "WARNING: pk3 not found"
+          fi
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && format('dev-{0}', github.run_number) || github.ref_name }}
+          name: "${{ github.event_name == 'workflow_dispatch' && format('Development Build {0}', github.run_number) || github.ref_name }}"
           prerelease: ${{ github.event_name == 'workflow_dispatch' }}
           generate_release_notes: true
           files: |
-            release/jaymod-linux64.zip
-            release/jaymod-linux32.zip
-            release/jaymod-windows.zip
-            release/jaymod-macos.zip
+            release/xmod-2.0.0.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

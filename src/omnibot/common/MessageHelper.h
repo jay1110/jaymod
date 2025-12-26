@@ -1,11 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-// 
-// $LastChangedBy: drevil $
-// $LastChangedDate: 2008-01-16 09:41:57 -0800 (Wed, 16 Jan 2008) $
-// $LastChangedRevision: 2334 $
-//
-////////////////////////////////////////////////////////////////////////////////
-
 #ifndef __MESSAGEHELPER_H__
 #define __MESSAGEHELPER_H__
 
@@ -61,8 +53,9 @@ public:
 	{
 	}
 	~MessageHelper() {};
-private:
+
 	mutable int m_MessageId;
+private:
 	void		*m_pVoid;
 	obuint32	m_BlockSize;
 

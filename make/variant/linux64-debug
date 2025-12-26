@@ -1,0 +1,2 @@
+CXX.O = 1
+CXX.fnStrip = strip $(1)

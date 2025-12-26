@@ -1,0 +1,2 @@
+CXX.O  = 1
+CXX.fnStrip = $(GCC/)bin/x86_64-w64-mingw32-strip $(1)

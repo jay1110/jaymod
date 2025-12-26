@@ -58,7 +58,11 @@ coreTrace( int num, siginfo_t* info, ucontext_t* context )
     // This code segment taken from etpub.
     // Set the actual calling address for accurate stack traces.
     // If we don't do this stack traces are less accurate.
+#if defined(__x86_64__) || defined(__amd64__)
+    array[1] = (void*)context->uc_mcontext.gregs[REG_RIP];
+#else
     array[1] = (void*)context->uc_mcontext.gregs[REG_EIP];
+#endif
 
     elements = backtrace_symbols(array, size);
 

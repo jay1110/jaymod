@@ -1,20 +1,10 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-// $LastChangedBy: drevil $
-// $LastChangedDate: 2010-05-01 10:36:37 -0700 (Sat, 01 May 2010) $
-// $LastChangedRevision: 4841 $
-//
-////////////////////////////////////////////////////////////////////////////////
-
 #ifndef __BASE_MESSAGES_H__
 #define __BASE_MESSAGES_H__
 
-#include <omnibot/common/Omni-Bot_Types.h>
+#include "Omni-Bot_Types.h"
 
-#ifdef _MSC_VER
 #pragma pack(push)
 #pragma pack(4)
-#endif
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -94,7 +84,7 @@ struct Msg_PlayerMaxSpeed
 };
 
 struct Msg_IsAlive
-{
+{	
 	obBool		m_IsAlive;
 
 	Msg_IsAlive() : m_IsAlive(False) {}
@@ -137,7 +127,7 @@ struct Msg_PointContents
 struct Msg_ReadyToFire
 {
 	obBool		m_Ready;
-
+	
 	Msg_ReadyToFire() : m_Ready(False) {}
 };
 
@@ -372,7 +362,7 @@ struct Event_SystemClientConnected
 	int			m_DesiredClass;
 	int			m_DesiredTeam;
 
-	Event_SystemClientConnected()
+	Event_SystemClientConnected() 
 		: m_GameId(-1)
 		, m_IsBot(False)
 		, m_DesiredClass(RANDOM_CLASS_IF_NO_CLASS)
@@ -400,15 +390,7 @@ struct Event_EntityCreated
 {
 	GameEntity		m_Entity;
 	BitFlag32		m_EntityCategory;
-	int				m_EntityClass;
-};
-
-struct EntityInstance
-{
-	GameEntity		m_Entity;
-	BitFlag32		m_EntityCategory;
-	int				m_EntityClass;
-	int				m_TimeStamp;
+	int				m_EntityClass;	
 };
 
 struct Event_EntityDeleted
@@ -527,10 +509,12 @@ struct Event_DynamicPathsChanged
 {
 	int			m_TeamMask;
 	int			m_NavId;
+	NavFlags	m_NavFlags;
 
-	Event_DynamicPathsChanged(int _team, int _navid = 0)
+	Event_DynamicPathsChanged(int _team, int _navid = 0, NavFlags _navFlags = 0)
 		: m_TeamMask(_team)
 		, m_NavId(_navid)
+		, m_NavFlags(_navFlags)
 	{
 	}
 };
@@ -576,8 +560,6 @@ struct Event_EntLeaveRadius
 	GameEntity	m_Entity;
 };
 
-#ifdef _MSC_VER
 #pragma pack(pop)
-#endif
 
 #endif

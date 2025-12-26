@@ -1,11 +1,11 @@
 name  = xmod
-namef = jaymod
+namef = xmod
 namex = ^xxmod
 
-website   = http://jaymod.clanfu.org
-author    = Jaybird
-copyright = Copyright (c) 2005-2011 Jaybird. All Rights Reserved.
-irc       = irc.freenode.net #jaymod
+website   = https://github.com/jay1110/jaymod
+author    = Jaybird, ETc|#.Jay.#
+copyright = Copyright (c) 2005-2011 Jaybird, 2025 jay1110. All Rights Reserved.
+irc       = 
 
 versionMajor = 2
 versionMinor = 0

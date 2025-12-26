@@ -35,7 +35,13 @@ MODULE.LUA.srcs = \
 
 MODULE.LUA.objs    = $(MODULE.LUA.srcs:$(PROJECT/)src/%.c=$(BUILD/)%.o)
 MODULE.LUA.a       = $(BUILD/)lua/liblua$(STATICLIB.suffix)
-#MODULE.LUA.CXX.D += LUA_USE_LINUX
+# Enable platform-specific features for Lua
+ifeq ($(PROJECT.platformName),Linux)
+MODULE.LUA.CXX.D += LUA_USE_LINUX
+endif
+ifeq ($(PROJECT.platformName),Windows)
+MODULE.LUA.CXX.D += LUA_USE_WINDOWS
+endif
 MODULE.LUA.CXX.vis = 0
 MODULE.LUA.pdb     = $(BUILD/)lua/
 
