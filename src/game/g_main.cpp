@@ -1,5 +1,6 @@
 #include <bgame/impl.h>
 #include <omnibot/et/g_etbot_interface.h>
+#include <game/g_lua.h>
 
 level_locals_t	level;
 
@@ -2171,6 +2172,9 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	level.iBanner = 1;
 
     BG_updateAmmoTable();
+
+	// Initialize Lua
+	G_LuaInit();
 }
 
 
@@ -2198,6 +2202,9 @@ void G_ShutdownGame( int restart ) {
 	}
 
 	G_Printf ("==== ShutdownGame ====\n");
+
+	// Shutdown Lua
+	G_LuaShutdown();
 
     // Free any ghosts that still may be alive.
     AbstractHitModel::ghostCleanup();
