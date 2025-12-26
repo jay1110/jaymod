@@ -17,7 +17,7 @@ MODULE.UI.srcs = $(sort \
 
 MODULE.UI.objs = $(MODULE.UI.srcs:$(PROJECT/)src/%.cpp=$(BUILD/)ui/%.o)
 MODULE.UI.pchs = $(foreach i,$(CXX.pch.arch),$(BUILD/)ui/bgame/impl.h.$(CXX.pch.ext)/$(i))
-MODULE.UI.so   = $(BUILD/)ui/ui$(IDMODULE.suffix)
+MODULE.UI.so   = $(BUILD/)ui/$(IDMODULE.prefix)ui$(IDMODULE.suffix)
 MODULE.UI.pdb  = $(BUILD/)ui/
 
 ###############################################################################

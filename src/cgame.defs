@@ -34,7 +34,7 @@ MODULE.CGAME.srcs.pch = $(sort \
 
 MODULE.CGAME.objs.pch = $(MODULE.CGAME.srcs.pch:$(PROJECT/)src/%.cpp=$(BUILD/)cgame/%.o)
 MODULE.CGAME.pchs     = $(foreach i,$(CXX.pch.arch),$(BUILD/)cgame/bgame/impl.h.$(CXX.pch.ext)/$(i))
-MODULE.CGAME.so       = $(BUILD/)cgame/cgame$(IDMODULE.suffix)
+MODULE.CGAME.so       = $(BUILD/)cgame/$(IDMODULE.prefix)cgame$(IDMODULE.suffix)
 MODULE.CGAME.pdb      = $(BUILD/)cgame/
 
 ###############################################################################
