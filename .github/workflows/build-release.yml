@@ -181,6 +181,9 @@ jobs:
           echo "=== pak-combined contents ==="
           ls -la pak-combined/
           
+          # Create the .dat file (marker file required by the mod)
+          touch pak-combined/xmod-2.0.0.dat
+          
           # Create the pk3 file (contains all pak data + cgame/ui for all platforms)
           cd pak-combined
           if [ "$(ls -A 2>/dev/null)" ]; then

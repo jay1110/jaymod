@@ -16,7 +16,7 @@
 
 // the "gameversion" client command will print this plus compile date
 #ifndef PRE_RELEASE_DEMO
-#define GAMEVERSION			"jaymod"
+#define GAMEVERSION			JAYMOD_namef
 #else
 //#define GAMEVERSION			"You look like you need a monkey!"
 #define GAMEVERSION			"ettest"
