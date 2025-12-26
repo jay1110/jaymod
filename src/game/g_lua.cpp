@@ -297,7 +297,7 @@ void G_LuaStopVM(lua_vm_t* vm)
 qboolean G_LuaRunIsolated(const char* modName)
 {
     int freeVM, flen = 0;
-    char filename[MAX_OSPATH];
+    char filename[MAX_QPATH];
     char* code;
     fileHandle_t f;
     lua_vm_t* vm;
@@ -478,11 +478,11 @@ void G_LuaStatus(gentity_t* ent)
     // Print header
     if (ent) {
         trap_SendServerCommand(ent - g_entities, va("print \"Lua API: showing lua information (%d module%s loaded)\n\"", cnt, cnt == 1 ? "" : "s"));
-        trap_SendServerCommand(ent - g_entities, "print \"%-2s %-24s %-40s %-24s\n\" VM Modname Signature Filename");
+        trap_SendServerCommand(ent - g_entities, "print \"VM Modname                  Signature                                Filename\n\"");
         trap_SendServerCommand(ent - g_entities, "print \"-- ------------------------ ---------------------------------------- ------------------------\n\"");
     } else {
         G_Printf("Lua API: showing lua information (%d module%s loaded)\n", cnt, cnt == 1 ? "" : "s");
-        G_Printf("%-2s %-24s %-40s %-24s\n", "VM", "Modname", "Signature", "Filename");
+        G_Printf("VM Modname                  Signature                                Filename\n");
         G_Printf("-- ------------------------ ---------------------------------------- ------------------------\n");
     }
 
