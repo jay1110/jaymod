@@ -1,5 +1,6 @@
 #include <bgame/impl.h>
 #include <omnibot/et/g_etbot_interface.h>
+#include <game/g_lua.h>
 
 // g_client.c -- client functions that don't happen every frame
 
@@ -1834,6 +1835,9 @@ void ClientUserinfoChanged( int clientNum ) {
 
     // index user now that values have been updated
     userDB.index( user );
+
+    // Call Lua et_ClientUserinfoChanged callback
+    G_LuaHook_ClientUserinfoChanged(clientNum);
 }
 
 
@@ -2186,6 +2190,15 @@ ClientConnect( string& outmsg, int clientNum, qboolean firstTime, qboolean isBot
 	// Jaybird - announce admin level entry.
 	clientObject.notifyConnecting( firstTime );
 
+	// Call Lua et_ClientConnect callback
+	{
+		char reason[MAX_STRING_CHARS] = "";
+		if (G_LuaHook_ClientConnect(clientNum, firstTime, isBot, reason)) {
+			outmsg = reason;
+			return true;
+		}
+	}
+
 	return false;
 }
 
@@ -2368,6 +2381,9 @@ void ClientBegin( int clientNum )
 	// OSP
 
 	g_clientObjects[clientNum].notifyBegin();
+
+	// Call Lua et_ClientBegin callback
+	G_LuaHook_ClientBegin(clientNum);
 }
 
 gentity_t *SelectSpawnPointFromList( char *list, vec3_t spawn_origin, vec3_t spawn_angles )
@@ -2785,6 +2801,10 @@ void ClientSpawn( gentity_t *ent, qboolean revived )
 
 	// Jaybird - Reset (init) poison events
 	G_ResetPoisonEvents(ent);
+
+	// Call Lua et_ClientSpawn callback
+	// Note: teamChange and restoreHealth are set to qfalse for now
+	G_LuaHook_ClientSpawn(ent - g_entities, revived, qfalse, qfalse);
 }
 
 
@@ -2925,6 +2945,9 @@ void ClientDisconnect( int clientNum ) {
 	}
 
 	G_LogPrintf( "ClientDisconnect: %i\n", clientNum );
+
+	// Call Lua et_ClientDisconnect callback
+	G_LuaHook_ClientDisconnect(clientNum);
 
     // Jaybird - moved this here as the rest of this
     // function relies on client structure being sane.

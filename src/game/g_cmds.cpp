@@ -1,5 +1,6 @@
 #include <bgame/impl.h>
 #include <omnibot/et/g_etbot_interface.h>
+#include <game/g_lua.h>
 
 void BotDebug(int clientNum);
 void GetBotAutonomies(int clientNum, int *weapAutonomy, int *moveAutonomy);	
@@ -3515,6 +3516,11 @@ void ClientCommand( int clientNum ) {
 	}
 
 	trap_Argv( 0, cmd, sizeof( cmd ) );
+
+	// Call Lua et_ClientCommand callback
+	if (G_LuaHook_ClientCommand(clientNum, cmd)) {
+		return;  // Command was handled by Lua
+	}
 
 	if (Q_stricmp (cmd, "say") == 0) {
 		if( !connectedUsers[ent-g_entities]->muted ) {

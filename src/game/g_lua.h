@@ -72,5 +72,42 @@ qboolean G_LuaGetNamedFunction(lua_vm_t* vm, const char* name);
 lua_vm_t* G_LuaGetVM(lua_State* L);
 
 ///////////////////////////////////////////////////////////////////////////////
+// Lua Callback Hooks - Called from game code to invoke Lua scripts
+///////////////////////////////////////////////////////////////////////////////
+
+// Called when qagame initializes
+void G_LuaHook_InitGame(int levelTime, int randomSeed, int restart);
+
+// Called when qagame shuts down
+void G_LuaHook_ShutdownGame(int restart);
+
+// Called every server frame
+void G_LuaHook_RunFrame(int levelTime);
+
+// Called when a client connects
+qboolean G_LuaHook_ClientConnect(int clientNum, qboolean firstTime, qboolean isBot, char* reason);
+
+// Called when a client disconnects
+void G_LuaHook_ClientDisconnect(int clientNum);
+
+// Called when a client begins
+void G_LuaHook_ClientBegin(int clientNum);
+
+// Called when a client's userinfo changes
+void G_LuaHook_ClientUserinfoChanged(int clientNum);
+
+// Called when a client spawns
+void G_LuaHook_ClientSpawn(int clientNum, qboolean revived, qboolean teamChange, qboolean restoreHealth);
+
+// Called when a client command is received
+qboolean G_LuaHook_ClientCommand(int clientNum, char* command);
+
+// Called when a console command is entered
+qboolean G_LuaHook_ConsoleCommand(char* command);
+
+// Called when text is printed
+void G_LuaHook_Print(char* text);
+
+///////////////////////////////////////////////////////////////////////////////
 
 #endif // GAME_G_LUA_H

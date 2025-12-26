@@ -512,3 +512,316 @@ void G_LuaStatus(gentity_t* ent)
         G_Printf("-- ------------------------ ---------------------------------------- ------------------------\n");
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Lua Callback Hooks - Called from game code to invoke Lua scripts
+///////////////////////////////////////////////////////////////////////////////
+
+// G_LuaHook_InitGame - Called when qagame initializes
+void G_LuaHook_InitGame(int levelTime, int randomSeed, int restart)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_InitGame")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, levelTime);
+            lua_pushinteger(vm->L, randomSeed);
+            lua_pushinteger(vm->L, restart);
+            // Call
+            if (!G_LuaCall(vm, "et_InitGame", 3, 0)) {
+                continue;
+            }
+        }
+    }
+}
+
+// G_LuaHook_ShutdownGame - Called when qagame shuts down
+void G_LuaHook_ShutdownGame(int restart)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_ShutdownGame")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, restart);
+            // Call
+            if (!G_LuaCall(vm, "et_ShutdownGame", 1, 0)) {
+                continue;
+            }
+        }
+    }
+}
+
+// G_LuaHook_RunFrame - Called every server frame
+void G_LuaHook_RunFrame(int levelTime)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_RunFrame")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, levelTime);
+            // Call
+            if (!G_LuaCall(vm, "et_RunFrame", 1, 0)) {
+                continue;
+            }
+        }
+    }
+}
+
+// G_LuaHook_ClientConnect - Called when a client connects
+qboolean G_LuaHook_ClientConnect(int clientNum, qboolean firstTime, qboolean isBot, char* reason)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_ClientConnect")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, clientNum);
+            lua_pushinteger(vm->L, (int)firstTime);
+            lua_pushinteger(vm->L, (int)isBot);
+            // Call
+            if (!G_LuaCall(vm, "et_ClientConnect", 3, 1)) {
+                continue;
+            }
+            // Return values
+            if (lua_isstring(vm->L, -1)) {
+                Q_strncpyz(reason, lua_tostring(vm->L, -1), MAX_STRING_CHARS);
+                lua_pop(vm->L, 1);
+                return qtrue;
+            }
+            lua_pop(vm->L, 1);
+        }
+    }
+    return qfalse;
+}
+
+// G_LuaHook_ClientDisconnect - Called when a client disconnects
+void G_LuaHook_ClientDisconnect(int clientNum)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_ClientDisconnect")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, clientNum);
+            // Call
+            if (!G_LuaCall(vm, "et_ClientDisconnect", 1, 0)) {
+                continue;
+            }
+        }
+    }
+}
+
+// G_LuaHook_ClientBegin - Called when a client begins
+void G_LuaHook_ClientBegin(int clientNum)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_ClientBegin")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, clientNum);
+            // Call
+            if (!G_LuaCall(vm, "et_ClientBegin", 1, 0)) {
+                continue;
+            }
+        }
+    }
+}
+
+// G_LuaHook_ClientUserinfoChanged - Called when a client's userinfo changes
+void G_LuaHook_ClientUserinfoChanged(int clientNum)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_ClientUserinfoChanged")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, clientNum);
+            // Call
+            if (!G_LuaCall(vm, "et_ClientUserinfoChanged", 1, 0)) {
+                continue;
+            }
+        }
+    }
+}
+
+// G_LuaHook_ClientSpawn - Called when a client spawns
+void G_LuaHook_ClientSpawn(int clientNum, qboolean revived, qboolean teamChange, qboolean restoreHealth)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_ClientSpawn")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, clientNum);
+            lua_pushinteger(vm->L, (int)revived);
+            lua_pushinteger(vm->L, (int)teamChange);
+            lua_pushinteger(vm->L, (int)restoreHealth);
+            // Call
+            if (!G_LuaCall(vm, "et_ClientSpawn", 4, 0)) {
+                continue;
+            }
+        }
+    }
+}
+
+// G_LuaHook_ClientCommand - Called when a client command is received
+qboolean G_LuaHook_ClientCommand(int clientNum, char* command)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_ClientCommand")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, clientNum);
+            lua_pushstring(vm->L, command);
+            // Call
+            if (!G_LuaCall(vm, "et_ClientCommand", 2, 1)) {
+                continue;
+            }
+            // Return values
+            if (lua_isnumber(vm->L, -1)) {
+                if (lua_tointeger(vm->L, -1) == 1) {
+                    lua_pop(vm->L, 1);
+                    return qtrue;
+                }
+            }
+            lua_pop(vm->L, 1);
+        }
+    }
+    return qfalse;
+}
+
+// G_LuaHook_ConsoleCommand - Called when a console command is entered
+qboolean G_LuaHook_ConsoleCommand(char* command)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_ConsoleCommand")) {
+                continue;
+            }
+            // Arguments
+            lua_pushstring(vm->L, command);
+            // Call
+            if (!G_LuaCall(vm, "et_ConsoleCommand", 1, 1)) {
+                continue;
+            }
+            // Return values
+            if (lua_isnumber(vm->L, -1)) {
+                if (lua_tointeger(vm->L, -1) == 1) {
+                    lua_pop(vm->L, 1);
+                    return qtrue;
+                }
+            }
+            lua_pop(vm->L, 1);
+        }
+    }
+    return qfalse;
+}
+
+// G_LuaHook_Print - Called when text is printed
+void G_LuaHook_Print(char* text)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_Print")) {
+                continue;
+            }
+            // Arguments
+            lua_pushstring(vm->L, text);
+            // Call
+            if (!G_LuaCall(vm, "et_Print", 1, 0)) {
+                continue;
+            }
+        }
+    }
+}

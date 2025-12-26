@@ -1004,6 +1004,11 @@ qboolean	ConsoleCommand( void ) {
 
 	trap_Argv( 0, cmd, sizeof( cmd ) );
 
+	// Call Lua et_ConsoleCommand callback
+	if (G_LuaHook_ConsoleCommand(cmd)) {
+		return qtrue;  // Command was handled by Lua
+	}
+
 	if ( Q_stricmp (cmd, "entitylist") == 0 ) {
 		Svcmd_EntityList_f();
 		return qtrue;
