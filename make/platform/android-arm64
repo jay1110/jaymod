@@ -8,7 +8,8 @@ NDK_API = 21
 
 ###############################################################################
 
-IDMODULE.suffix = .mp.arm64-v8a.so
+IDMODULE.prefix = lib
+IDMODULE.suffix = .mp.android.arm64-v8a.so
 STATICLIB.suffix = .a
 
 ###############################################################################

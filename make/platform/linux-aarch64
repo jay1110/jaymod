@@ -5,6 +5,7 @@ GCC/ = /usr/
 
 ###############################################################################
 
+IDMODULE.prefix =
 IDMODULE.suffix = .mp.aarch64.so
 STATICLIB.suffix   = .a
 

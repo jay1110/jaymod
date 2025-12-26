@@ -2,6 +2,7 @@ GCC/ = /usr/
 
 ###############################################################################
 
+IDMODULE.prefix  =
 IDMODULE.suffix  = _mac
 STATICLIB.suffix = .a
 

@@ -244,3 +244,52 @@ MAKE TARGETS
 
    make clean
    make CXX.opt.W=-w
+
+--------------------------------------------------------------------------------
+OUTPUT FILE NAMING (.dll / .so / .dylib)
+
+The names of compiled shared library files (.dll, .so, .dylib) are determined
+by configuration variables in platform-specific makefiles:
+
+1. IDMODULE.prefix - Optional prefix for library names (e.g., "lib" for Android)
+2. IDMODULE.suffix - File extension and architecture identifier
+
+Platform configurations (make/platform/*):
+
+   Platform          IDMODULE.prefix   IDMODULE.suffix
+   --------          ---------------   ---------------
+   linux                               .mp.i386.so
+   linux64                             .mp.x86_64.so
+   linux-aarch64                       .mp.aarch64.so
+   windows                             _mp_x86.dll
+   windows64                           _mp_x64.dll
+   mingw                               _mp_x86.dll
+   mingw64                             _mp_x64.dll
+   osx                                 _mac
+   osx64                               .mp.x86_64.dylib
+   android-arm64     lib               .mp.android.arm64-v8a.so
+   android-x86       lib               .mp.android.i386.so
+   android-x86_64    lib               .mp.android.x86_64.so
+
+Module base names - Defined in module definition files (src/*.defs):
+   Output is: $(IDMODULE.prefix)<basename>$(IDMODULE.suffix)
+
+   Module    Definition File    Output Variable       Base Name
+   ------    ---------------    ---------------       ---------
+   game      src/game.defs      MODULE.GAME.so        qagame
+   cgame     src/cgame.defs     MODULE.CGAME.so       cgame
+   ui        src/ui.defs        MODULE.UI.so          ui
+
+Examples of final output names:
+
+   Linux 32-bit:  qagame.mp.i386.so, cgame.mp.i386.so, ui.mp.i386.so
+   Linux 64-bit:  qagame.mp.x86_64.so, cgame.mp.x86_64.so, ui.mp.x86_64.so
+   Windows 32:    qagame_mp_x86.dll, cgame_mp_x86.dll, ui_mp_x86.dll
+   Windows 64:    qagame_mp_x64.dll, cgame_mp_x64.dll, ui_mp_x64.dll
+   Android:       libqagame.mp.android.arm64-v8a.so, libcgame.mp.android.arm64-v8a.so
+   OSX:           qagame_mac, cgame_mac, ui_mac (Note: OSX uses bundles without
+                  traditional file extensions; these are wrapped into .bundle dirs)
+
+To change the output file names:
+- Edit IDMODULE.prefix and IDMODULE.suffix in the appropriate make/platform/* file
+- Edit MODULE.*.so in the appropriate src/*.defs file for the base name
