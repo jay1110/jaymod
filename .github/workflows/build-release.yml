@@ -112,31 +112,27 @@ jobs:
       
       - name: Build pak data files
         run: |
-          # pak data files are in the pak/ directory and get staged during build
-          # We need to collect the raw data files (not cgame/ui, those come from other builds)
+          # pak data files are in the pak/ directory
+          # We need to collect all the raw data files (not cgame/ui, those come from other builds)
           mkdir -p pak-data
           
-          # Copy all pak resources (animations, characters, fonts, gfx, maps, models, scripts, sound, sprites, ui, watermark, weapons)
-          for dir in animations characters fonts gfx maps models scripts sound sprites ui watermark weapons; do
-            if [ -d "pak/$dir" ]; then
-              cp -r "pak/$dir" pak-data/ 2>/dev/null || true
-            fi
-          done
+          # Copy all pak resources directly
+          cp -r pak/* pak-data/
           
-          # Process m4 templates - need to generate the project.mk first
-          PLATFORM=linux64 make build.linux64/make/project.mk || true
-          
-          # Copy the dat file generation script info (will create placeholder)
-          mkdir -p pak-data
+          # Remove build definition files from pak-data (they're not needed in release)
+          rm -f pak-data/pak.defs pak-data/pak.rules 2>/dev/null || true
           
           # Show what we collected
-          find pak-data -type f | head -20
+          echo "=== Files collected for pak data ==="
+          find pak-data -type f | head -30
+          echo "Total files: $(find pak-data -type f | wc -l)"
       
       - name: Upload pak data
         uses: actions/upload-artifact@v4
         with:
           name: xmod-pak-data
           path: pak-data/
+          if-no-files-found: warn
 
   create-release:
     needs: [build-linux64, build-linux32, build-windows, build-pak-data]
@@ -160,8 +156,10 @@ jobs:
           find artifacts -type f
           
           # === Create pk3 with all client-side binaries (cgame, ui) for all platforms ===
-          # Copy pak data files first
-          cp -r artifacts/xmod-pak-data/* pak-combined/
+          # Copy pak data files first (if they exist)
+          if [ -d "artifacts/xmod-pak-data" ] && [ "$(ls -A artifacts/xmod-pak-data 2>/dev/null)" ]; then
+            cp -r artifacts/xmod-pak-data/* pak-combined/
+          fi
           
           # Add cgame and ui binaries from all platforms to pak
           # Linux 64-bit
@@ -185,7 +183,11 @@ jobs:
           
           # Create the pk3 file (contains all pak data + cgame/ui for all platforms)
           cd pak-combined
-          zip -r ../release/xmod/xmod-2.0.0.pk3 *
+          if [ "$(ls -A 2>/dev/null)" ]; then
+            zip -r ../release/xmod/xmod-2.0.0.pk3 *
+          else
+            echo "WARNING: No pak data found to package!"
+          fi
           cd ..
           
           # === Add all qagame (server-side) binaries to release folder ===
@@ -230,7 +232,11 @@ jobs:
           unzip -l xmod-2.0.0.zip
           
           echo "=== pk3 contents ==="
-          unzip -l xmod/xmod-2.0.0.pk3
+          if [ -f "xmod/xmod-2.0.0.pk3" ]; then
+            unzip -l xmod/xmod-2.0.0.pk3
+          else
+            echo "WARNING: pk3 not found"
+          fi
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
