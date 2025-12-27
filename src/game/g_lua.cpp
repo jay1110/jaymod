@@ -394,13 +394,11 @@ static int _et_G_ClientSound(lua_State* L)
         return 0;
     }
     
-    // Play sound to the player's team
-    int team = ent->client->sess.sessionTeam;
-    gentity_t* te = G_TempEntity(ent->r.currentOrigin, EV_GLOBAL_CLIENT_SOUND);
+    // Play sound originating from client entity to team members
+    // Based on ETLegacy's G_ClientSound and local G_ClientSound implementation
+    gentity_t* te = G_TempEntity(ent->client->ps.origin, EV_GLOBAL_CLIENT_SOUND);
     te->s.teamNum = clientnum;
     te->s.eventParm = soundindex;
-    te->r.singleClient = team;
-    te->r.svFlags = SVF_BROADCAST;
     
     return 0;
 }
@@ -5016,6 +5014,8 @@ qboolean G_LuaHook_SetPlayerSkill(int clientNum, int skill, int level)
 
 // G_LuaHook_UpgradeSkill - Called when a player gets a skill upgrade
 // Returns qtrue if skill upgrade should be blocked
+// NOTE: ETLegacy API uses -1 as the blocking return value for this callback,
+// while other fire callbacks use 1. This is intentional for ETLegacy compatibility.
 qboolean G_LuaHook_UpgradeSkill(int clientNum, int skill)
 {
     int i;
