@@ -122,24 +122,650 @@ static int _et_trap_Milliseconds(lua_State* L)
     return 1;
 }
 
+// et.ConcatArgs(index) - Returns all arguments starting from index concatenated
+static int _et_ConcatArgs(lua_State* L)
+{
+    int index = (int)luaL_checkinteger(L, 1);
+    lua_pushstring(L, ConcatArgs(index));
+    return 1;
+}
+
+// et.trap_GetConfigstring(index) - Get a configstring value
+static int _et_trap_GetConfigstring(lua_State* L)
+{
+    char buff[MAX_STRING_CHARS];
+    int index = (int)luaL_checkinteger(L, 1);
+    trap_GetConfigstring(index, buff, sizeof(buff));
+    lua_pushstring(L, buff);
+    return 1;
+}
+
+// et.trap_SetConfigstring(index, value) - Set a configstring value
+static int _et_trap_SetConfigstring(lua_State* L)
+{
+    int index = (int)luaL_checkinteger(L, 1);
+    const char* csv = luaL_checkstring(L, 2);
+    trap_SetConfigstring(index, csv);
+    return 0;
+}
+
+// et.trap_GetUserinfo(clientnum) - Get a client's userinfo string
+static int _et_trap_GetUserinfo(lua_State* L)
+{
+    char buff[MAX_STRING_CHARS];
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    trap_GetUserinfo(clientnum, buff, sizeof(buff));
+    lua_pushstring(L, buff);
+    return 1;
+}
+
+// et.trap_SetUserinfo(clientnum, userinfo) - Set a client's userinfo string
+static int _et_trap_SetUserinfo(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    const char* userinfo = luaL_checkstring(L, 2);
+    trap_SetUserinfo(clientnum, userinfo);
+    return 0;
+}
+
+// et.trap_DropClient(clientnum, reason, bantime) - Disconnect a client
+static int _et_trap_DropClient(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    const char* reason = luaL_checkstring(L, 2);
+    int ban_time = (int)luaL_checkinteger(L, 3);
+    trap_DropClient(clientnum, reason, ban_time);
+    return 0;
+}
+
+// et.ClientUserinfoChanged(clientnum) - Notify that userinfo changed
+static int _et_ClientUserinfoChanged(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    ClientUserinfoChanged(clientnum);
+    return 0;
+}
+
+// et.ClientNumberFromString(string) - Find client number from partial name match
+static int _et_ClientNumberFromString(lua_State* L)
+{
+    const char* search = luaL_checkstring(L, 1);
+    int pids[MAX_CLIENTS];
+    
+    // Only send exact matches, otherwise nil
+    if (ClientNumbersFromString((char*)search, pids) == 1) {
+        lua_pushinteger(L, pids[0]);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
+}
+
+// et.FindMod(vmnumber) - Returns the name and signature for a VM slot
+static int _et_FindMod(lua_State* L)
+{
+    int vmnumber = (int)luaL_checkinteger(L, 1);
+    
+    if (vmnumber >= 0 && vmnumber < LUA_NUM_VM && lVM[vmnumber]) {
+        lua_vm_t* vm = lVM[vmnumber];
+        lua_pushstring(L, vm->mod_name);
+        lua_pushstring(L, vm->mod_signature);
+    } else {
+        lua_pushnil(L);
+        lua_pushnil(L);
+    }
+    return 2;
+}
+
+// et.IPCSend(vmnumber, message) - Send a message to another VM
+static int _et_IPCSend(lua_State* L)
+{
+    int vmnumber = (int)luaL_checkinteger(L, 1);
+    const char* message = luaL_checkstring(L, 2);
+    
+    lua_vm_t* sender = G_LuaGetVM(L);
+    lua_vm_t* vm = NULL;
+    
+    if (vmnumber >= 0 && vmnumber < LUA_NUM_VM) {
+        vm = lVM[vmnumber];
+    }
+    
+    if (!vm || vm->err) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+    
+    // Find callback
+    if (!G_LuaGetNamedFunction(vm, "et_IPCReceive")) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+    
+    // Arguments
+    if (sender) {
+        lua_pushinteger(vm->L, sender->id);
+    } else {
+        lua_pushnil(vm->L);
+    }
+    lua_pushstring(vm->L, message);
+    
+    // Call
+    if (!G_LuaCall(vm, "et.IPCSend", 2, 0)) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+    
+    // Success
+    lua_pushinteger(L, 1);
+    return 1;
+}
+
+// et.Info_RemoveKey(infostring, key) - Remove a key from an infostring
+static int _et_Info_RemoveKey(lua_State* L)
+{
+    char buff[MAX_INFO_STRING];
+    const char* key = luaL_checkstring(L, 2);
+    Q_strncpyz(buff, luaL_checkstring(L, 1), sizeof(buff));
+    Info_RemoveKey(buff, key);
+    lua_pushstring(L, buff);
+    return 1;
+}
+
+// et.Info_SetValueForKey(infostring, key, value) - Set a value in an infostring
+static int _et_Info_SetValueForKey(lua_State* L)
+{
+    char buff[MAX_INFO_STRING];
+    const char* key = luaL_checkstring(L, 2);
+    const char* value = luaL_checkstring(L, 3);
+    Q_strncpyz(buff, luaL_checkstring(L, 1), sizeof(buff));
+    Info_SetValueForKey(buff, key, value);
+    lua_pushstring(L, buff);
+    return 1;
+}
+
+// et.Info_ValueForKey(infostring, key) - Get a value from an infostring
+static int _et_Info_ValueForKey(lua_State* L)
+{
+    const char* infostring = luaL_checkstring(L, 1);
+    const char* key = luaL_checkstring(L, 2);
+    lua_pushstring(L, Info_ValueForKey(infostring, key));
+    return 1;
+}
+
+// et.Q_CleanStr(string) - Remove color codes from a string
+static int _et_Q_CleanStr(lua_State* L)
+{
+    char buff[MAX_STRING_CHARS];
+    Q_strncpyz(buff, luaL_checkstring(L, 1), sizeof(buff));
+    Q_CleanStr(buff);
+    lua_pushstring(L, buff);
+    return 1;
+}
+
+// et.G_Say(clientNum, mode, text) - Make a client say something
+static int _et_G_Say(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    int mode = (int)luaL_checkinteger(L, 2);
+    const char* text = luaL_checkstring(L, 3);
+    G_Say(g_entities + clientnum, NULL, mode, text);
+    return 0;
+}
+
+// et.isBitSet(bit, value) - Check if a bit is set in a value
+static int _et_isBitSet(lua_State* L)
+{
+    int b = (int)luaL_checkinteger(L, 1);
+    int v = (int)luaL_checkinteger(L, 2);
+    lua_pushboolean(L, (v & b) ? 1 : 0);
+    return 1;
+}
+
+// et.G_Damage(target, inflictor, attacker, damage, dflags, mod) - Damage an entity
+static int _et_G_Damage(lua_State* L)
+{
+    int target = (int)luaL_checkinteger(L, 1);
+    int inflictor = (int)luaL_checkinteger(L, 2);
+    int attacker = (int)luaL_checkinteger(L, 3);
+    int damage = (int)luaL_checkinteger(L, 4);
+    int dflags = (int)luaL_checkinteger(L, 5);
+    int mod = (int)luaL_checkinteger(L, 6);
+    
+    G_Damage(g_entities + target,
+             g_entities + inflictor,
+             g_entities + attacker,
+             NULL,
+             NULL,
+             damage,
+             dflags,
+             (meansOfDeath_t)mod);
+    
+    return 0;
+}
+
+// et.G_SoundIndex(filename) - Get a sound index
+static int _et_G_SoundIndex(lua_State* L)
+{
+    const char* filename = luaL_checkstring(L, 1);
+    lua_pushinteger(L, G_SoundIndex(filename));
+    return 1;
+}
+
+// et.G_ModelIndex(filename) - Get a model index
+static int _et_G_ModelIndex(lua_State* L)
+{
+    const char* filename = luaL_checkstring(L, 1);
+    lua_pushinteger(L, G_ModelIndex((char*)filename));
+    return 1;
+}
+
+// et.G_globalSound(sound) - Play a global sound
+static int _et_G_globalSound(lua_State* L)
+{
+    const char* sound = luaL_checkstring(L, 1);
+    G_globalSound((char*)sound);
+    return 0;
+}
+
+// et.G_Sound(entnum, soundindex) - Play a sound at an entity's position
+static int _et_G_Sound(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    int soundindex = (int)luaL_checkinteger(L, 2);
+    G_Sound(g_entities + entnum, soundindex);
+    return 0;
+}
+
+// Filesystem functions
+
+// et.trap_FS_FOpenFile(filename, mode) - Open a file
+static int _et_trap_FS_FOpenFile(lua_State* L)
+{
+    fileHandle_t fd;
+    int len;
+    const char* filename = luaL_checkstring(L, 1);
+    int mode = (int)luaL_checkinteger(L, 2);
+    
+    len = trap_FS_FOpenFile(filename, &fd, (fsMode_t)mode);
+    lua_pushinteger(L, fd);
+    lua_pushinteger(L, len);
+    return 2;
+}
+
+// et.trap_FS_Read(fd, count) - Read from a file
+static int _et_trap_FS_Read(lua_State* L)
+{
+    fileHandle_t fd = (int)luaL_checkinteger(L, 1);
+    int count = (int)luaL_checkinteger(L, 2);
+    char* filedata;
+    
+    filedata = (char*)malloc(count + 1);
+    if (filedata == NULL) {
+        G_Printf("Lua API: memory allocation error for trap_FS_Read\n");
+        lua_pushstring(L, "");
+        return 1;
+    }
+    
+    trap_FS_Read(filedata, count, fd);
+    *(filedata + count) = '\0';
+    lua_pushstring(L, filedata);
+    free(filedata);
+    return 1;
+}
+
+// et.trap_FS_Write(filedata, count, fd) - Write to a file
+static int _et_trap_FS_Write(lua_State* L)
+{
+    const char* filedata = luaL_checkstring(L, 1);
+    int count = (int)luaL_checkinteger(L, 2);
+    fileHandle_t fd = (int)luaL_checkinteger(L, 3);
+    lua_pushinteger(L, trap_FS_Write(filedata, count, fd));
+    return 1;
+}
+
+// et.trap_FS_FCloseFile(fd) - Close a file
+static int _et_trap_FS_FCloseFile(lua_State* L)
+{
+    fileHandle_t fd = (int)luaL_checkinteger(L, 1);
+    trap_FS_FCloseFile(fd);
+    return 0;
+}
+
+// et.trap_FS_Rename(oldname, newname) - Rename a file
+static int _et_trap_FS_Rename(lua_State* L)
+{
+    const char* oldname = luaL_checkstring(L, 1);
+    const char* newname = luaL_checkstring(L, 2);
+    trap_FS_Rename(oldname, newname);
+    return 0;
+}
+
+// Entity functions
+
+// et.G_TempEntity(origin, event) - Spawn a temporary entity
+static int _et_G_TempEntity(lua_State* L)
+{
+    vec3_t origin;
+    int event = (int)luaL_checkinteger(L, 2);
+    
+    // Get origin from table
+    lua_pushvalue(L, 1);
+    lua_pushnumber(L, 1);
+    lua_gettable(L, -2);
+    origin[0] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    lua_pushnumber(L, 2);
+    lua_gettable(L, -2);
+    origin[1] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    lua_pushnumber(L, 3);
+    lua_gettable(L, -2);
+    origin[2] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 2);
+    
+    lua_pushinteger(L, G_TempEntity(origin, event) - g_entities);
+    return 1;
+}
+
+// et.G_FreeEntity(entnum) - Free an entity
+static int _et_G_FreeEntity(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    G_FreeEntity(g_entities + entnum);
+    return 0;
+}
+
+// et.G_EntitiesFree() - Count free entities
+static int _et_G_EntitiesFree(lua_State* L)
+{
+    int count = 0;
+    int i;
+    for (i = MAX_CLIENTS; i < level.num_entities; i++) {
+        if (!g_entities[i].inuse) {
+            count++;
+        }
+    }
+    lua_pushinteger(L, count);
+    return 1;
+}
+
+// et.trap_LinkEntity(entnum) - Link an entity
+static int _et_trap_LinkEntity(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    trap_LinkEntity(g_entities + entnum);
+    return 0;
+}
+
+// et.trap_UnlinkEntity(entnum) - Unlink an entity
+static int _et_trap_UnlinkEntity(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    trap_UnlinkEntity(g_entities + entnum);
+    return 0;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Lua library registration
 ///////////////////////////////////////////////////////////////////////////////
 
 static const luaL_Reg etlib[] = {
+    // Printing
     { "G_Print",                 _et_G_Print                 },
     { "G_LogPrint",              _et_G_LogPrint              },
+    
+    // Module management
     { "RegisterModname",         _et_RegisterModname         },
     { "FindSelf",                _et_FindSelf                },
+    { "FindMod",                 _et_FindMod                 },
+    { "IPCSend",                 _et_IPCSend                 },
+    
+    // Cvars
     { "trap_Cvar_Get",           _et_trap_Cvar_Get           },
     { "trap_Cvar_Set",           _et_trap_Cvar_Set           },
+    
+    // Server commands
     { "trap_SendConsoleCommand", _et_trap_SendConsoleCommand },
     { "trap_SendServerCommand",  _et_trap_SendServerCommand  },
+    
+    // Arguments
     { "trap_Argc",               _et_trap_Argc               },
     { "trap_Argv",               _et_trap_Argv               },
+    { "ConcatArgs",              _et_ConcatArgs              },
+    
+    // Config strings
+    { "trap_GetConfigstring",    _et_trap_GetConfigstring    },
+    { "trap_SetConfigstring",    _et_trap_SetConfigstring    },
+    
+    // Userinfo
+    { "trap_GetUserinfo",        _et_trap_GetUserinfo        },
+    { "trap_SetUserinfo",        _et_trap_SetUserinfo        },
+    { "ClientUserinfoChanged",   _et_ClientUserinfoChanged   },
+    
+    // Client management
+    { "trap_DropClient",         _et_trap_DropClient         },
+    { "ClientNumberFromString",  _et_ClientNumberFromString  },
+    { "G_Say",                   _et_G_Say                   },
+    
+    // String utilities
+    { "Info_RemoveKey",          _et_Info_RemoveKey          },
+    { "Info_SetValueForKey",     _et_Info_SetValueForKey     },
+    { "Info_ValueForKey",        _et_Info_ValueForKey        },
+    { "Q_CleanStr",              _et_Q_CleanStr              },
+    
+    // Filesystem
+    { "trap_FS_FOpenFile",       _et_trap_FS_FOpenFile       },
+    { "trap_FS_Read",            _et_trap_FS_Read            },
+    { "trap_FS_Write",           _et_trap_FS_Write           },
+    { "trap_FS_FCloseFile",      _et_trap_FS_FCloseFile      },
+    { "trap_FS_Rename",          _et_trap_FS_Rename          },
+    
+    // Sound
+    { "G_SoundIndex",            _et_G_SoundIndex            },
+    { "G_ModelIndex",            _et_G_ModelIndex            },
+    { "G_globalSound",           _et_G_globalSound           },
+    { "G_Sound",                 _et_G_Sound                 },
+    
+    // Entities
+    { "G_TempEntity",            _et_G_TempEntity            },
+    { "G_FreeEntity",            _et_G_FreeEntity            },
+    { "G_EntitiesFree",          _et_G_EntitiesFree          },
+    { "trap_LinkEntity",         _et_trap_LinkEntity         },
+    { "trap_UnlinkEntity",       _et_trap_UnlinkEntity       },
+    
+    // Miscellaneous
     { "trap_Milliseconds",       _et_trap_Milliseconds       },
+    { "isBitSet",                _et_isBitSet                },
+    { "G_Damage",                _et_G_Damage                },
+    
     { NULL,                      NULL                        }
 };
+
+///////////////////////////////////////////////////////////////////////////////
+// Helper macro for registering constants
+///////////////////////////////////////////////////////////////////////////////
+
+#define lua_regconstinteger(L, n) \
+    (lua_pushstring(L, #n), lua_pushinteger(L, n), lua_settable(L, -3))
+
+///////////////////////////////////////////////////////////////////////////////
+// G_LuaRegisterConstants - Register game constants for Lua scripts
+///////////////////////////////////////////////////////////////////////////////
+
+static void G_LuaRegisterConstants(lua_State* L)
+{
+    // Get the et table
+    lua_getglobal(L, "et");
+    
+    // Team constants
+    lua_regconstinteger(L, TEAM_FREE);
+    lua_regconstinteger(L, TEAM_AXIS);
+    lua_regconstinteger(L, TEAM_ALLIES);
+    lua_regconstinteger(L, TEAM_SPECTATOR);
+    lua_regconstinteger(L, TEAM_NUM_TEAMS);
+    
+    // Class constants
+    lua_regconstinteger(L, PC_SOLDIER);
+    lua_regconstinteger(L, PC_MEDIC);
+    lua_regconstinteger(L, PC_ENGINEER);
+    lua_regconstinteger(L, PC_FIELDOPS);
+    lua_regconstinteger(L, PC_COVERTOPS);
+    
+    // Skill constants
+    lua_regconstinteger(L, SK_BATTLE_SENSE);
+    lua_regconstinteger(L, SK_EXPLOSIVES_AND_CONSTRUCTION);
+    lua_regconstinteger(L, SK_FIRST_AID);
+    lua_regconstinteger(L, SK_SIGNALS);
+    lua_regconstinteger(L, SK_LIGHT_WEAPONS);
+    lua_regconstinteger(L, SK_HEAVY_WEAPONS);
+    lua_regconstinteger(L, SK_MILITARY_INTELLIGENCE_AND_SCOPED_WEAPONS);
+    lua_regconstinteger(L, SK_NUM_SKILLS);
+    
+    // Weapon constants
+    lua_regconstinteger(L, WP_NONE);
+    lua_regconstinteger(L, WP_KNIFE);
+    lua_regconstinteger(L, WP_LUGER);
+    lua_regconstinteger(L, WP_MP40);
+    lua_regconstinteger(L, WP_GRENADE_LAUNCHER);
+    lua_regconstinteger(L, WP_PANZERFAUST);
+    lua_regconstinteger(L, WP_FLAMETHROWER);
+    lua_regconstinteger(L, WP_COLT);
+    lua_regconstinteger(L, WP_THOMPSON);
+    lua_regconstinteger(L, WP_GRENADE_PINEAPPLE);
+    lua_regconstinteger(L, WP_STEN);
+    lua_regconstinteger(L, WP_MEDIC_SYRINGE);
+    lua_regconstinteger(L, WP_AMMO);
+    lua_regconstinteger(L, WP_ARTY);
+    lua_regconstinteger(L, WP_SILENCER);
+    lua_regconstinteger(L, WP_DYNAMITE);
+    lua_regconstinteger(L, WP_MEDKIT);
+    lua_regconstinteger(L, WP_BINOCULARS);
+    lua_regconstinteger(L, WP_PLIERS);
+    lua_regconstinteger(L, WP_SMOKE_MARKER);
+    lua_regconstinteger(L, WP_KAR98);
+    lua_regconstinteger(L, WP_CARBINE);
+    lua_regconstinteger(L, WP_GARAND);
+    lua_regconstinteger(L, WP_LANDMINE);
+    lua_regconstinteger(L, WP_SATCHEL);
+    lua_regconstinteger(L, WP_SATCHEL_DET);
+    lua_regconstinteger(L, WP_SMOKE_BOMB);
+    lua_regconstinteger(L, WP_MOBILE_MG42);
+    lua_regconstinteger(L, WP_K43);
+    lua_regconstinteger(L, WP_FG42);
+    lua_regconstinteger(L, WP_MORTAR);
+    lua_regconstinteger(L, WP_AKIMBO_COLT);
+    lua_regconstinteger(L, WP_AKIMBO_LUGER);
+    lua_regconstinteger(L, WP_GPG40);
+    lua_regconstinteger(L, WP_M7);
+    lua_regconstinteger(L, WP_SILENCED_COLT);
+    lua_regconstinteger(L, WP_GARAND_SCOPE);
+    lua_regconstinteger(L, WP_K43_SCOPE);
+    lua_regconstinteger(L, WP_FG42SCOPE);
+    lua_regconstinteger(L, WP_MORTAR_SET);
+    lua_regconstinteger(L, WP_MEDIC_ADRENALINE);
+    lua_regconstinteger(L, WP_AKIMBO_SILENCEDCOLT);
+    lua_regconstinteger(L, WP_AKIMBO_SILENCEDLUGER);
+    lua_regconstinteger(L, WP_MOBILE_MG42_SET);
+    lua_regconstinteger(L, WP_NUM_WEAPONS);
+    
+    // Means of death constants
+    lua_regconstinteger(L, MOD_UNKNOWN);
+    lua_regconstinteger(L, MOD_MACHINEGUN);
+    lua_regconstinteger(L, MOD_BROWNING);
+    lua_regconstinteger(L, MOD_MG42);
+    lua_regconstinteger(L, MOD_GRENADE);
+    lua_regconstinteger(L, MOD_KNIFE);
+    lua_regconstinteger(L, MOD_LUGER);
+    lua_regconstinteger(L, MOD_COLT);
+    lua_regconstinteger(L, MOD_MP40);
+    lua_regconstinteger(L, MOD_THOMPSON);
+    lua_regconstinteger(L, MOD_STEN);
+    lua_regconstinteger(L, MOD_GARAND);
+    lua_regconstinteger(L, MOD_SILENCER);
+    lua_regconstinteger(L, MOD_FG42);
+    lua_regconstinteger(L, MOD_FG42SCOPE);
+    lua_regconstinteger(L, MOD_PANZERFAUST);
+    lua_regconstinteger(L, MOD_GRENADE_LAUNCHER);
+    lua_regconstinteger(L, MOD_FLAMETHROWER);
+    lua_regconstinteger(L, MOD_GRENADE_PINEAPPLE);
+    lua_regconstinteger(L, MOD_DYNAMITE);
+    lua_regconstinteger(L, MOD_AIRSTRIKE);
+    lua_regconstinteger(L, MOD_SYRINGE);
+    lua_regconstinteger(L, MOD_AMMO);
+    lua_regconstinteger(L, MOD_ARTY);
+    lua_regconstinteger(L, MOD_WATER);
+    lua_regconstinteger(L, MOD_SLIME);
+    lua_regconstinteger(L, MOD_LAVA);
+    lua_regconstinteger(L, MOD_CRUSH);
+    lua_regconstinteger(L, MOD_TELEFRAG);
+    lua_regconstinteger(L, MOD_FALLING);
+    lua_regconstinteger(L, MOD_SUICIDE);
+    lua_regconstinteger(L, MOD_TRIGGER_HURT);
+    lua_regconstinteger(L, MOD_EXPLOSIVE);
+    lua_regconstinteger(L, MOD_CARBINE);
+    lua_regconstinteger(L, MOD_KAR98);
+    lua_regconstinteger(L, MOD_GPG40);
+    lua_regconstinteger(L, MOD_M7);
+    lua_regconstinteger(L, MOD_LANDMINE);
+    lua_regconstinteger(L, MOD_SATCHEL);
+    lua_regconstinteger(L, MOD_SMOKEBOMB);
+    lua_regconstinteger(L, MOD_MOBILE_MG42);
+    lua_regconstinteger(L, MOD_SILENCED_COLT);
+    lua_regconstinteger(L, MOD_GARAND_SCOPE);
+    lua_regconstinteger(L, MOD_K43);
+    lua_regconstinteger(L, MOD_K43_SCOPE);
+    lua_regconstinteger(L, MOD_MORTAR);
+    lua_regconstinteger(L, MOD_AKIMBO_COLT);
+    lua_regconstinteger(L, MOD_AKIMBO_LUGER);
+    lua_regconstinteger(L, MOD_AKIMBO_SILENCEDCOLT);
+    lua_regconstinteger(L, MOD_AKIMBO_SILENCEDLUGER);
+    lua_regconstinteger(L, MOD_SMOKEGRENADE);
+    lua_regconstinteger(L, MOD_SWAP_PLACES);
+    lua_regconstinteger(L, MOD_SWITCHTEAM);
+    lua_regconstinteger(L, MOD_NUM_MODS);
+    
+    // Say mode constants
+    lua_regconstinteger(L, SAY_ALL);
+    lua_regconstinteger(L, SAY_TEAM);
+    lua_regconstinteger(L, SAY_BUDDY);
+    lua_regconstinteger(L, SAY_TEAMNL);
+    
+    // Exec constants
+    lua_regconstinteger(L, EXEC_NOW);
+    lua_regconstinteger(L, EXEC_INSERT);
+    lua_regconstinteger(L, EXEC_APPEND);
+    
+    // Filesystem constants
+    lua_regconstinteger(L, FS_READ);
+    lua_regconstinteger(L, FS_WRITE);
+    lua_regconstinteger(L, FS_APPEND);
+    lua_regconstinteger(L, FS_APPEND_SYNC);
+    
+    // Max constants
+    lua_regconstinteger(L, MAX_CLIENTS);
+    lua_regconstinteger(L, MAX_GENTITIES);
+    lua_regconstinteger(L, MAX_MODELS);
+    lua_regconstinteger(L, MAX_SOUNDS);
+    
+    // Configstring constants
+    lua_regconstinteger(L, CS_SERVERINFO);
+    lua_regconstinteger(L, CS_SYSTEMINFO);
+    lua_regconstinteger(L, CS_MUSIC);
+    lua_regconstinteger(L, CS_MESSAGE);
+    lua_regconstinteger(L, CS_MOTD);
+    lua_regconstinteger(L, CS_WARMUP);
+    lua_regconstinteger(L, CS_VOTE_TIME);
+    lua_regconstinteger(L, CS_VOTE_STRING);
+    lua_regconstinteger(L, CS_VOTE_YES);
+    lua_regconstinteger(L, CS_VOTE_NO);
+    lua_regconstinteger(L, CS_GAME_VERSION);
+    lua_regconstinteger(L, CS_LEVEL_START_TIME);
+    lua_regconstinteger(L, CS_INTERMISSION);
+    lua_regconstinteger(L, CS_PLAYERS);
+    
+    // Pop the et table
+    lua_pop(L, 1);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // G_LuaGetVM - Get the VM for a given lua_State
@@ -221,6 +847,9 @@ qboolean G_LuaStartVM(lua_vm_t* vm)
     // Register et library
     luaL_newlib(vm->L, etlib);
     lua_setglobal(vm->L, "et");
+    
+    // Register game constants
+    G_LuaRegisterConstants(vm->L);
 
     // Load the Lua code
     res = luaL_loadbuffer(vm->L, vm->code, vm->code_size, vm->file_name);

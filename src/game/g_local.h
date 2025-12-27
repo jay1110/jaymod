@@ -1626,6 +1626,7 @@ void Cmd_Say_f( gentity_t *ent, int mode, qboolean arg0 );
 void Cmd_Team_f( gentity_t *ent, unsigned int dwCommand, qboolean fValue );
 void Cmd_SetWeapons_f( gentity_t *ent, unsigned int dwCommand, qboolean fValue );
 void Cmd_SetClass_f( gentity_t *ent, unsigned int dwCommand, qboolean fValue );
+void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText );
 void G_SayTo( gentity_t *ent, gentity_t *other, int mode, int color, const string name, const string message, bool localize );
 
 //
