@@ -1652,6 +1652,7 @@ void CG_RegisterWeapon( int weaponNum, qboolean force ) {
 		case WP_LANDMINE_BBETTY:		filename = "landmine_bbetty.weap"; break;
 		case WP_LANDMINE_PGAS:			filename = "landmine_pgas.weap"; break;
 		case WP_MOLOTOV:				filename = "molotov.weap"; break;
+		case WP_TRIPMINE:				filename = "tripmine.weap"; break;
 		case WP_ARTY:					return;	// to shut the game up
 		default:						CG_Printf( S_COLOR_RED "WARNING: trying to register weapon %i but there is no weapon file entry for it.\n", weaponNum ); return;
 	}
