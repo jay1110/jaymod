@@ -346,15 +346,20 @@ qboolean G_LuaRunIsolated(const char* modName)
     // Compute signature hash for the code
     // Using a simple hash algorithm since SHA1 is not available
     {
-        unsigned long hash = 5381;
+        unsigned long hash1 = 5381;
+        unsigned long hash2 = 0;
         int c;
         char* p = code;
+        int idx = 0;
         while ((c = *p++)) {
-            hash = ((hash << 5) + hash) + c; // hash * 33 + c
+            hash1 = ((hash1 << 5) + hash1) + c; // hash * 33 + c
+            hash2 = hash2 ^ (c * (idx + 1)); // secondary hash
+            idx++;
         }
         
         // Also incorporate file length for uniqueness
-        hash ^= (unsigned long)flen;
+        hash1 ^= (unsigned long)flen;
+        hash2 ^= (unsigned long)(flen * 31);
         
         // Init lua_vm_t struct
         vm = (lua_vm_t*)malloc(sizeof(lua_vm_t));
@@ -367,9 +372,9 @@ qboolean G_LuaRunIsolated(const char* modName)
         vm->id = -1;
         Q_strncpyz(vm->file_name, filename, sizeof(vm->file_name));
         Q_strncpyz(vm->mod_name, "", sizeof(vm->mod_name));
-        // Store hash as hex signature
+        // Store hash as hex signature (two 32-bit values for portability)
         Com_sprintf(vm->mod_signature, sizeof(vm->mod_signature), "%08lX%08lX", 
-            (hash >> 32) & 0xFFFFFFFF, hash & 0xFFFFFFFF);
+            hash1 & 0xFFFFFFFF, hash2 & 0xFFFFFFFF);
     }
     vm->code = code;
     vm->code_size = flen;
