@@ -2027,6 +2027,538 @@ static int _et_VectorMA(lua_State* L)
     return 1;
 }
 
+// et.G_PrintCenter(clientNum, text) - Print centered text to client
+static int _et_G_PrintCenter(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    const char* text = luaL_checkstring(L, 2);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    trap_SendServerCommand(clientNum, va("cp \"%s\"", text));
+    return 0;
+}
+
+// et.G_PrintBanner(clientNum, text) - Print banner text to client
+static int _et_G_PrintBanner(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    const char* text = luaL_checkstring(L, 2);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    trap_SendServerCommand(clientNum, va("cpm \"%s\"", text));
+    return 0;
+}
+
+// et.G_PopupMessage(clientNum, icon, text) - Show popup message
+static int _et_G_PopupMessage(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int icon = (int)luaL_checkinteger(L, 2);
+    const char* text = luaL_checkstring(L, 3);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    trap_SendServerCommand(clientNum, va("pm %d %s", icon, text));
+    return 0;
+}
+
+// et.G_PushDyno(entnum, owner) - Push dyno to list
+static int _et_G_PushDyno(lua_State* L)
+{
+    // Stub for now - dyno management would require more game-specific code
+    return 0;
+}
+
+// et.G_GetBotEntity(clientNum) - Get bot entity number
+static int _et_G_GetBotEntity(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, clientNum);  // In this game, client entity number equals client number
+    return 1;
+}
+
+// et.playerstate_get(clientNum, fieldname) - Get player state field
+static int _et_playerstate_get(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    const char* fieldname = luaL_checkstring(L, 2);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gclient_t* client = &level.clients[clientNum];
+    if (!client) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    playerState_t* ps = &client->ps;
+    
+    if (!Q_stricmp(fieldname, "clientNum")) {
+        lua_pushinteger(L, ps->clientNum);
+    } else if (!Q_stricmp(fieldname, "commandTime")) {
+        lua_pushinteger(L, ps->commandTime);
+    } else if (!Q_stricmp(fieldname, "pm_type")) {
+        lua_pushinteger(L, ps->pm_type);
+    } else if (!Q_stricmp(fieldname, "pm_flags")) {
+        lua_pushinteger(L, ps->pm_flags);
+    } else if (!Q_stricmp(fieldname, "pm_time")) {
+        lua_pushinteger(L, ps->pm_time);
+    } else if (!Q_stricmp(fieldname, "eFlags")) {
+        lua_pushinteger(L, ps->eFlags);
+    } else if (!Q_stricmp(fieldname, "weapon")) {
+        lua_pushinteger(L, ps->weapon);
+    } else if (!Q_stricmp(fieldname, "weaponstate")) {
+        lua_pushinteger(L, ps->weaponstate);
+    } else if (!Q_stricmp(fieldname, "viewangles")) {
+        _et_pushvec3(L, ps->viewangles);
+    } else if (!Q_stricmp(fieldname, "origin")) {
+        _et_pushvec3(L, ps->origin);
+    } else if (!Q_stricmp(fieldname, "velocity")) {
+        _et_pushvec3(L, ps->velocity);
+    } else if (!Q_stricmp(fieldname, "viewheight")) {
+        lua_pushinteger(L, ps->viewheight);
+    } else if (!Q_stricmp(fieldname, "groundEntityNum")) {
+        lua_pushinteger(L, ps->groundEntityNum);
+    } else if (!Q_stricmp(fieldname, "gravity")) {
+        lua_pushinteger(L, ps->gravity);
+    } else if (!Q_stricmp(fieldname, "speed")) {
+        lua_pushinteger(L, ps->speed);
+    } else if (!Q_stricmp(fieldname, "delta_angles")) {
+        vec3_t angles;
+        angles[0] = SHORT2ANGLE(ps->delta_angles[0]);
+        angles[1] = SHORT2ANGLE(ps->delta_angles[1]);
+        angles[2] = SHORT2ANGLE(ps->delta_angles[2]);
+        _et_pushvec3(L, angles);
+    } else if (!Q_stricmp(fieldname, "damageEvent")) {
+        lua_pushinteger(L, ps->damageEvent);
+    } else if (!Q_stricmp(fieldname, "damageYaw")) {
+        lua_pushinteger(L, ps->damageYaw);
+    } else if (!Q_stricmp(fieldname, "damagePitch")) {
+        lua_pushinteger(L, ps->damagePitch);
+    } else if (!Q_stricmp(fieldname, "damageCount")) {
+        lua_pushinteger(L, ps->damageCount);
+    } else if (!Q_stricmp(fieldname, "persistant")) {
+        // Return as table
+        lua_newtable(L);
+        for (int i = 0; i < MAX_PERSISTANT; i++) {
+            lua_pushinteger(L, i);
+            lua_pushinteger(L, ps->persistant[i]);
+            lua_settable(L, -3);
+        }
+    } else if (!Q_stricmp(fieldname, "eventParms")) {
+        // Return as table
+        lua_newtable(L);
+        for (int i = 0; i < MAX_EVENTS; i++) {
+            lua_pushinteger(L, i);
+            lua_pushinteger(L, ps->eventParms[i]);
+            lua_settable(L, -3);
+        }
+    } else if (!Q_stricmp(fieldname, "powerups")) {
+        // Return as table
+        lua_newtable(L);
+        for (int i = 0; i < MAX_POWERUPS; i++) {
+            lua_pushinteger(L, i);
+            lua_pushinteger(L, ps->powerups[i]);
+            lua_settable(L, -3);
+        }
+    } else if (!Q_stricmp(fieldname, "ammo")) {
+        // Return as table
+        lua_newtable(L);
+        for (int i = 0; i < WP_NUM_WEAPONS; i++) {
+            lua_pushinteger(L, i);
+            lua_pushinteger(L, ps->ammo[i]);
+            lua_settable(L, -3);
+        }
+    } else if (!Q_stricmp(fieldname, "ammoclip")) {
+        // Return as table
+        lua_newtable(L);
+        for (int i = 0; i < WP_NUM_WEAPONS; i++) {
+            lua_pushinteger(L, i);
+            lua_pushinteger(L, ps->ammoclip[i]);
+            lua_settable(L, -3);
+        }
+    } else if (!Q_stricmp(fieldname, "stats")) {
+        // Return as table
+        lua_newtable(L);
+        for (int i = 0; i < MAX_STATS; i++) {
+            lua_pushinteger(L, i);
+            lua_pushinteger(L, ps->stats[i]);
+            lua_settable(L, -3);
+        }
+    } else if (!Q_stricmp(fieldname, "ping")) {
+        lua_pushinteger(L, ps->ping);
+    } else if (!Q_stricmp(fieldname, "leanf")) {
+        lua_pushnumber(L, ps->leanf);
+    } else {
+        lua_pushnil(L);
+    }
+    
+    return 1;
+}
+
+// et.playerstate_set(clientNum, fieldname, value) - Set player state field
+static int _et_playerstate_set(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    const char* fieldname = luaL_checkstring(L, 2);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    gclient_t* client = &level.clients[clientNum];
+    if (!client) {
+        return 0;
+    }
+    
+    playerState_t* ps = &client->ps;
+    
+    if (!Q_stricmp(fieldname, "pm_type")) {
+        ps->pm_type = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "pm_flags")) {
+        ps->pm_flags = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "pm_time")) {
+        ps->pm_time = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "eFlags")) {
+        ps->eFlags = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "weapon")) {
+        ps->weapon = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "weaponstate")) {
+        ps->weaponstate = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "viewangles")) {
+        vec3_t angles;
+        _et_getvec3(L, 3, angles);
+        VectorCopy(angles, ps->viewangles);
+    } else if (!Q_stricmp(fieldname, "origin")) {
+        vec3_t origin;
+        _et_getvec3(L, 3, origin);
+        VectorCopy(origin, ps->origin);
+    } else if (!Q_stricmp(fieldname, "velocity")) {
+        vec3_t velocity;
+        _et_getvec3(L, 3, velocity);
+        VectorCopy(velocity, ps->velocity);
+    } else if (!Q_stricmp(fieldname, "viewheight")) {
+        ps->viewheight = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "gravity")) {
+        ps->gravity = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "speed")) {
+        ps->speed = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "leanf")) {
+        ps->leanf = (float)luaL_checknumber(L, 3);
+    }
+    
+    return 0;
+}
+
+// et.G_GetSpawnVar(index, key) - Get spawn variable value
+static int _et_G_GetSpawnVar(lua_State* L)
+{
+    // Stub - spawn vars are only available during spawn
+    lua_pushnil(L);
+    return 1;
+}
+
+// et.G_SetSpawnVar(index, key, value) - Set spawn variable value
+static int _et_G_SetSpawnVar(lua_State* L)
+{
+    // Stub - spawn vars are only available during spawn
+    return 0;
+}
+
+// et.G_FireTeamCount(team) - Count fire teams for a team
+static int _et_G_FireTeamCount(lua_State* L)
+{
+    // Stub for now - would need fireteam iteration code
+    lua_pushinteger(L, 0);
+    return 1;
+}
+
+// et.GetNumAlivePlayers() - Get number of alive players
+static int _et_GetNumAlivePlayers(lua_State* L)
+{
+    int count = 0;
+    for (int i = 0; i < level.numConnectedClients; i++) {
+        int clientNum = level.sortedClients[i];
+        gentity_t* ent = &g_entities[clientNum];
+        if (ent->client && ent->client->sess.sessionTeam != TEAM_SPECTATOR &&
+            ent->client->ps.pm_type != PM_DEAD) {
+            count++;
+        }
+    }
+    lua_pushinteger(L, count);
+    return 1;
+}
+
+// et.GetNumAliveAxis() - Get number of alive Axis players
+static int _et_GetNumAliveAxis(lua_State* L)
+{
+    int count = 0;
+    for (int i = 0; i < level.numConnectedClients; i++) {
+        int clientNum = level.sortedClients[i];
+        gentity_t* ent = &g_entities[clientNum];
+        if (ent->client && ent->client->sess.sessionTeam == TEAM_AXIS &&
+            ent->client->ps.pm_type != PM_DEAD) {
+            count++;
+        }
+    }
+    lua_pushinteger(L, count);
+    return 1;
+}
+
+// et.GetNumAliveAllies() - Get number of alive Allied players
+static int _et_GetNumAliveAllies(lua_State* L)
+{
+    int count = 0;
+    for (int i = 0; i < level.numConnectedClients; i++) {
+        int clientNum = level.sortedClients[i];
+        gentity_t* ent = &g_entities[clientNum];
+        if (ent->client && ent->client->sess.sessionTeam == TEAM_ALLIES &&
+            ent->client->ps.pm_type != PM_DEAD) {
+            count++;
+        }
+    }
+    lua_pushinteger(L, count);
+    return 1;
+}
+
+// et.G_TimeLimit() - Get time limit
+static int _et_G_TimeLimit(lua_State* L)
+{
+    lua_pushinteger(L, g_timelimit.integer);
+    return 1;
+}
+
+// et.G_SetTimeLimit(limit) - Set time limit
+static int _et_G_SetTimeLimit(lua_State* L)
+{
+    int limit = (int)luaL_checkinteger(L, 1);
+    trap_Cvar_Set("timelimit", va("%d", limit));
+    return 0;
+}
+
+// et.G_MatchIsWarmup() - Check if match is in warmup
+static int _et_G_MatchIsWarmup(lua_State* L)
+{
+    lua_pushboolean(L, level.warmupEndTime != 0);
+    return 1;
+}
+
+// et.G_MatchIsIntermission() - Check if match is in intermission
+static int _et_G_MatchIsIntermission(lua_State* L)
+{
+    lua_pushboolean(L, level.intermissiontime != 0);
+    return 1;
+}
+
+// et.G_MatchIsPaused() - Check if match is paused
+static int _et_G_MatchIsPaused(lua_State* L)
+{
+    // Use a simple cvar check instead
+    char buff[8];
+    trap_Cvar_VariableStringBuffer("g_paused", buff, sizeof(buff));
+    lua_pushboolean(L, atoi(buff) != 0);
+    return 1;
+}
+
+// et.G_RestartMap() - Restart the current map
+static int _et_G_RestartMap(lua_State* L)
+{
+    trap_SendConsoleCommand(EXEC_APPEND, "map_restart 0\n");
+    return 0;
+}
+
+// et.G_NextMap() - Go to next map
+static int _et_G_NextMap(lua_State* L)
+{
+    trap_SendConsoleCommand(EXEC_APPEND, "vstr nextmap\n");
+    return 0;
+}
+
+// et.G_SetWinner(team) - Set the winning team
+static int _et_G_SetWinner(lua_State* L)
+{
+    int team = (int)luaL_checkinteger(L, 1);
+    trap_SetConfigstring(CS_MULTI_INFO, va("%d", team));
+    return 0;
+}
+
+// et.G_EndRound(team) - End the round with winning team
+static int _et_G_EndRound(lua_State* L)
+{
+    // This would require round-end logic
+    return 0;
+}
+
+// et.G_GetPowerup(clientNum, powerup) - Get powerup time remaining
+static int _et_G_GetPowerup(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int powerup = (int)luaL_checkinteger(L, 2);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    if (powerup < 0 || powerup >= MAX_POWERUPS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (ent->client) {
+        lua_pushinteger(L, ent->client->ps.powerups[powerup]);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
+}
+
+// et.G_SetPowerup(clientNum, powerup, time) - Set powerup time
+static int _et_G_SetPowerup(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int powerup = (int)luaL_checkinteger(L, 2);
+    int time = (int)luaL_checkinteger(L, 3);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    if (powerup < 0 || powerup >= MAX_POWERUPS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (ent->client) {
+        ent->client->ps.powerups[powerup] = time;
+    }
+    return 0;
+}
+
+// et.G_SetPlayerStat(clientNum, statIndex, value) - Set player stat
+static int _et_G_SetPlayerStat(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int statIndex = (int)luaL_checkinteger(L, 2);
+    int value = (int)luaL_checkinteger(L, 3);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    if (statIndex < 0 || statIndex >= MAX_STATS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (ent->client) {
+        ent->client->ps.stats[statIndex] = value;
+    }
+    return 0;
+}
+
+// et.G_GetPlayerStat(clientNum, statIndex) - Get player stat
+static int _et_G_GetPlayerStat(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int statIndex = (int)luaL_checkinteger(L, 2);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    if (statIndex < 0 || statIndex >= MAX_STATS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (ent->client) {
+        lua_pushinteger(L, ent->client->ps.stats[statIndex]);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
+}
+
+// et.G_IsClientDead(clientNum) - Check if client is dead
+static int _et_G_IsClientDead(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushboolean(L, 1);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (ent->client) {
+        lua_pushboolean(L, ent->client->ps.pm_type == PM_DEAD);
+    } else {
+        lua_pushboolean(L, 1);
+    }
+    return 1;
+}
+
+// et.G_IsClientAlive(clientNum) - Check if client is alive
+static int _et_G_IsClientAlive(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (ent->client && ent->client->sess.sessionTeam != TEAM_SPECTATOR) {
+        lua_pushboolean(L, ent->client->ps.pm_type != PM_DEAD);
+    } else {
+        lua_pushboolean(L, 0);
+    }
+    return 1;
+}
+
+// et.G_SetEntityThink(entnum, thinkfunc) - Set entity think function (stub)
+static int _et_G_SetEntityThink(lua_State* L)
+{
+    // This is a stub - setting think functions from Lua is complex
+    return 0;
+}
+
+// et.G_SetNextThinkTime(entnum, time) - Set entity's next think time
+static int _et_G_SetNextThinkTime(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    int time = (int)luaL_checkinteger(L, 2);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        return 0;
+    }
+    
+    g_entities[entnum].nextthink = level.time + time;
+    return 0;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Lua library registration
 ///////////////////////////////////////////////////////////////////////////////
@@ -2199,16 +2731,60 @@ static const luaL_Reg etlib[] = {
     { "G_ClientSetGodmode",      _et_G_ClientSetGodmode      },
     { "G_ClientSetNoclip",       _et_G_ClientSetNoclip       },
     { "G_ClientHasWeapon",       _et_G_ClientHasWeapon       },
+    { "G_IsClientDead",          _et_G_IsClientDead          },
+    { "G_IsClientAlive",         _et_G_IsClientAlive         },
     
     // Ammo
     { "G_SetAmmo",               _et_G_SetAmmo               },
     { "G_GetAmmo",               _et_G_GetAmmo               },
     { "G_SetClipAmmo",           _et_G_SetClipAmmo           },
     
+    // Player state
+    { "playerstate_get",         _et_playerstate_get         },
+    { "playerstate_set",         _et_playerstate_set         },
+    { "G_GetPlayerStat",         _et_G_GetPlayerStat         },
+    { "G_SetPlayerStat",         _et_G_SetPlayerStat         },
+    
+    // Powerups
+    { "G_GetPowerup",            _et_G_GetPowerup            },
+    { "G_SetPowerup",            _et_G_SetPowerup            },
+    
+    // Printing to clients
+    { "G_PrintCenter",           _et_G_PrintCenter           },
+    { "G_PrintBanner",           _et_G_PrintBanner           },
+    { "G_PopupMessage",          _et_G_PopupMessage          },
+    
+    // Spawn vars
+    { "G_GetSpawnVar",           _et_G_GetSpawnVar           },
+    { "G_SetSpawnVar",           _et_G_SetSpawnVar           },
+    
+    // Player counting
+    { "GetNumAlivePlayers",      _et_GetNumAlivePlayers      },
+    { "GetNumAliveAxis",         _et_GetNumAliveAxis         },
+    { "GetNumAliveAllies",       _et_GetNumAliveAllies       },
+    
+    // Match state
+    { "G_TimeLimit",             _et_G_TimeLimit             },
+    { "G_SetTimeLimit",          _et_G_SetTimeLimit          },
+    { "G_MatchIsWarmup",         _et_G_MatchIsWarmup         },
+    { "G_MatchIsIntermission",   _et_G_MatchIsIntermission   },
+    { "G_MatchIsPaused",         _et_G_MatchIsPaused         },
+    { "G_RestartMap",            _et_G_RestartMap            },
+    { "G_NextMap",               _et_G_NextMap               },
+    { "G_SetWinner",             _et_G_SetWinner             },
+    { "G_EndRound",              _et_G_EndRound              },
+    
+    // Entity think
+    { "G_SetEntityThink",        _et_G_SetEntityThink        },
+    { "G_SetNextThinkTime",      _et_G_SetNextThinkTime      },
+    
     // Miscellaneous
     { "trap_Milliseconds",       _et_trap_Milliseconds       },
     { "isBitSet",                _et_isBitSet                },
     { "G_Damage",                _et_G_Damage                },
+    { "G_FireTeamCount",         _et_G_FireTeamCount         },
+    { "G_GetBotEntity",          _et_G_GetBotEntity          },
+    { "G_PushDyno",              _et_G_PushDyno              },
     
     { NULL,                      NULL                        }
 };
@@ -2394,6 +2970,62 @@ static void G_LuaRegisterConstants(lua_State* L)
     lua_regconstinteger(L, CS_LEVEL_START_TIME);
     lua_regconstinteger(L, CS_INTERMISSION);
     lua_regconstinteger(L, CS_PLAYERS);
+    
+    // PM type constants
+    lua_regconstinteger(L, PM_NORMAL);
+    lua_regconstinteger(L, PM_NOCLIP);
+    lua_regconstinteger(L, PM_SPECTATOR);
+    lua_regconstinteger(L, PM_DEAD);
+    lua_regconstinteger(L, PM_FREEZE);
+    lua_regconstinteger(L, PM_INTERMISSION);
+    
+    // Entity flag constants (EF_*)
+    lua_regconstinteger(L, EF_DEAD);
+    lua_regconstinteger(L, EF_TELEPORT_BIT);
+    lua_regconstinteger(L, EF_PRONE);
+    lua_regconstinteger(L, EF_PRONE_MOVING);
+    lua_regconstinteger(L, EF_MOUNTEDTANK);
+    lua_regconstinteger(L, EF_NODRAW);
+    lua_regconstinteger(L, EF_FIRING);
+    lua_regconstinteger(L, EF_MG42_ACTIVE);
+    lua_regconstinteger(L, EF_AAGUN_ACTIVE);
+    lua_regconstinteger(L, EF_SMOKING);
+    lua_regconstinteger(L, EF_PLAYDEAD);
+    
+    // Flag constants (FL_*)
+    lua_regconstinteger(L, FL_GODMODE);
+    lua_regconstinteger(L, FL_NOTARGET);
+    lua_regconstinteger(L, FL_TEAMSLAVE);
+    lua_regconstinteger(L, FL_NO_KNOCKBACK);
+    lua_regconstinteger(L, FL_DROPPED_ITEM);
+    lua_regconstinteger(L, FL_NO_BOTS);
+    lua_regconstinteger(L, FL_NO_HUMANS);
+    
+    // Powerup constants
+    lua_regconstinteger(L, PW_NONE);
+    lua_regconstinteger(L, PW_INVULNERABLE);
+    lua_regconstinteger(L, PW_FIRE);
+    lua_regconstinteger(L, PW_ELECTRIC);
+    lua_regconstinteger(L, PW_BREATHER);
+    lua_regconstinteger(L, PW_NOFATIGUE);
+    lua_regconstinteger(L, PW_REDFLAG);
+    lua_regconstinteger(L, PW_BLUEFLAG);
+    lua_regconstinteger(L, PW_OPS_DISGUISED);
+    lua_regconstinteger(L, PW_OPS_CLASS_1);
+    lua_regconstinteger(L, PW_OPS_CLASS_2);
+    lua_regconstinteger(L, PW_OPS_CLASS_3);
+    lua_regconstinteger(L, PW_ADRENALINE);
+    lua_regconstinteger(L, PW_BLACKOUT);
+    lua_regconstinteger(L, PW_NUM_POWERUPS);
+    
+    // Stat constants
+    lua_regconstinteger(L, STAT_HEALTH);
+    lua_regconstinteger(L, STAT_DEAD_YAW);
+    lua_regconstinteger(L, STAT_MAX_HEALTH);
+    lua_regconstinteger(L, STAT_PLAYER_CLASS);
+    lua_regconstinteger(L, STAT_XP);
+    lua_regconstinteger(L, STAT_ANTIWARP_DELAY);
+    lua_regconstinteger(L, STAT_KEYS);
     
     // Pop the et table
     lua_pop(L, 1);
