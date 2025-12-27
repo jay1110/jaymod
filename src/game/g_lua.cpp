@@ -4518,6 +4518,44 @@ qboolean G_LuaStartVM(lua_vm_t* vm)
     // Initialize the lua state with standard libraries
     luaL_openlibs(vm->L);
 
+    // Set up package.path for require() to find modules
+    // This matches ETLegacy's behavior: converts dots to directory separators
+    {
+        char basepath[MAX_OSPATH];
+        char homepath[MAX_OSPATH];
+        char gamepath[MAX_OSPATH];
+        const char* luaPath;
+        
+        trap_Cvar_VariableStringBuffer("fs_basepath", basepath, sizeof(basepath));
+        trap_Cvar_VariableStringBuffer("fs_homepath", homepath, sizeof(homepath));
+        trap_Cvar_VariableStringBuffer("fs_game", gamepath, sizeof(gamepath));
+        
+        // Build Lua search path: homepath/gamepath/?.lua and homepath/gamepath/lualibs/?.lua
+        luaPath = va("%s/%s/?.lua;%s/%s/lualibs/?.lua",
+                     homepath, gamepath,
+                     homepath, gamepath);
+        
+        // Add basepath if different from homepath
+        if (Q_stricmp(basepath, homepath)) {
+            luaPath = va("%s/%s/?.lua;%s/%s/lualibs/?.lua;%s",
+                         basepath, gamepath,
+                         basepath, gamepath,
+                         luaPath);
+        }
+        
+        // Set package.path
+        lua_getglobal(vm->L, "package");
+        if (lua_istable(vm->L, -1)) {
+            lua_pushstring(vm->L, luaPath);
+            lua_setfield(vm->L, -2, "path");
+        }
+        lua_pop(vm->L, 1);
+        
+        // Register LUA_PATH global for scripts that need it
+        lua_pushstring(vm->L, luaPath);
+        lua_setglobal(vm->L, "LUA_PATH");
+    }
+
     // Register et library
     luaL_newlib(vm->L, etlib);
     lua_setglobal(vm->L, "et");
