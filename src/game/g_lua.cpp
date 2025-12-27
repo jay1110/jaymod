@@ -4270,6 +4270,134 @@ static void G_LuaRegisterConstants(lua_State* L)
     lua_setconstinteger(L, "MASK_SHOT", CONTENTS_SOLID | CONTENTS_BODY | CONTENTS_CORPSE);
     lua_setconstinteger(L, "MASK_MISSILESHOT", CONTENTS_SOLID | CONTENTS_BODY | CONTENTS_CORPSE | CONTENTS_MISSILECLIP);
     
+    // Damage flags (DAMAGE_*)
+    lua_regconstinteger(L, DAMAGE_RADIUS);
+    lua_regconstinteger(L, DAMAGE_NO_KNOCKBACK);
+    lua_regconstinteger(L, DAMAGE_NO_PROTECTION);
+    lua_regconstinteger(L, DAMAGE_NO_TEAM_PROTECTION);
+    
+    // Entity types (ET_*)
+    lua_regconstinteger(L, ET_GENERAL);
+    lua_regconstinteger(L, ET_PLAYER);
+    lua_regconstinteger(L, ET_ITEM);
+    lua_regconstinteger(L, ET_MISSILE);
+    lua_regconstinteger(L, ET_MOVER);
+    lua_regconstinteger(L, ET_BEAM);
+    lua_regconstinteger(L, ET_PORTAL);
+    lua_regconstinteger(L, ET_SPEAKER);
+    lua_regconstinteger(L, ET_PUSH_TRIGGER);
+    lua_regconstinteger(L, ET_TELEPORT_TRIGGER);
+    lua_regconstinteger(L, ET_INVISIBLE);
+    lua_regconstinteger(L, ET_CONCUSSIVE_TRIGGER);
+    lua_regconstinteger(L, ET_OID_TRIGGER);
+    lua_regconstinteger(L, ET_EXPLOSIVE_INDICATOR);
+    lua_regconstinteger(L, ET_EXPLOSIVE);
+    lua_regconstinteger(L, ET_EF_SPOTLIGHT);
+    lua_regconstinteger(L, ET_ALARMBOX);
+    lua_regconstinteger(L, ET_CORONA);
+    lua_regconstinteger(L, ET_TRAP);
+    lua_regconstinteger(L, ET_GAMEMODEL);
+    lua_regconstinteger(L, ET_FOOTLOCKER);
+    lua_regconstinteger(L, ET_FLAMEBARREL);
+    lua_regconstinteger(L, ET_FP_PARTS);
+    lua_regconstinteger(L, ET_FIRE_COLUMN);
+    lua_regconstinteger(L, ET_FIRE_COLUMN_SMOKE);
+    lua_regconstinteger(L, ET_RAMJET);
+    lua_regconstinteger(L, ET_FLAMETHROWER_CHUNK);
+    lua_regconstinteger(L, ET_EXPLO_PART);
+    lua_regconstinteger(L, ET_PROP);
+    lua_regconstinteger(L, ET_AI_EFFECT);
+    lua_regconstinteger(L, ET_CAMERA);
+    lua_regconstinteger(L, ET_MOVERSCALED);
+    lua_regconstinteger(L, ET_CONSTRUCTIBLE_INDICATOR);
+    lua_regconstinteger(L, ET_CONSTRUCTIBLE);
+    lua_regconstinteger(L, ET_CONSTRUCTIBLE_MARKER);
+    lua_regconstinteger(L, ET_BOMB);
+    lua_regconstinteger(L, ET_WAYPOINT);
+    lua_regconstinteger(L, ET_BEAM_2);
+    lua_regconstinteger(L, ET_TANK_INDICATOR);
+    lua_regconstinteger(L, ET_TANK_INDICATOR_DEAD);
+    lua_regconstinteger(L, ET_BOTGOAL_INDICATOR);
+    lua_regconstinteger(L, ET_CORPSE);
+    lua_regconstinteger(L, ET_SMOKER);
+    lua_regconstinteger(L, ET_TEMPHEAD);
+    lua_regconstinteger(L, ET_MG42_BARREL);
+    lua_regconstinteger(L, ET_TEMPLEGS);
+    lua_regconstinteger(L, ET_TRIGGER_MULTIPLE);
+    lua_regconstinteger(L, ET_TRIGGER_FLAGONLY);
+    lua_regconstinteger(L, ET_TRIGGER_FLAGONLY_MULTIPLE);
+    lua_regconstinteger(L, ET_GAMEMANAGER);
+    lua_regconstinteger(L, ET_AAGUN);
+    lua_regconstinteger(L, ET_CABINET_H);
+    lua_regconstinteger(L, ET_CABINET_A);
+    lua_regconstinteger(L, ET_HEALER);
+    lua_regconstinteger(L, ET_SUPPLIER);
+    lua_regconstinteger(L, ET_LANDMINE_HINT);
+    lua_regconstinteger(L, ET_ATTRACTOR_HINT);
+    lua_regconstinteger(L, ET_SNIPER_HINT);
+    lua_regconstinteger(L, ET_LANDMINESPOT_HINT);
+    lua_regconstinteger(L, ET_COMMANDMAP_MARKER);
+    lua_regconstinteger(L, ET_WOLF_OBJECTIVE);
+    lua_regconstinteger(L, ET_EVENTS);
+    
+    // Trajectory types (TR_*)
+    lua_regconstinteger(L, TR_STATIONARY);
+    lua_regconstinteger(L, TR_INTERPOLATE);
+    lua_regconstinteger(L, TR_LINEAR);
+    lua_regconstinteger(L, TR_LINEAR_STOP);
+    lua_regconstinteger(L, TR_LINEAR_STOP_BACK);
+    lua_regconstinteger(L, TR_SINE);
+    lua_regconstinteger(L, TR_GRAVITY);
+    lua_regconstinteger(L, TR_GRAVITY_LOW);
+    lua_regconstinteger(L, TR_GRAVITY_FLOAT);
+    lua_regconstinteger(L, TR_GRAVITY_PAUSED);
+    lua_regconstinteger(L, TR_ACCELERATE);
+    lua_regconstinteger(L, TR_DECCELERATE);
+    lua_regconstinteger(L, TR_SPLINE);
+    lua_regconstinteger(L, TR_LINEAR_PATH);
+    
+    // Player movement flags (PMF_*)
+    lua_regconstinteger(L, PMF_DUCKED);
+    lua_regconstinteger(L, PMF_JUMP_HELD);
+    lua_regconstinteger(L, PMF_LADDER);
+    lua_regconstinteger(L, PMF_BACKWARDS_JUMP);
+    lua_regconstinteger(L, PMF_BACKWARDS_RUN);
+    lua_regconstinteger(L, PMF_TIME_LAND);
+    lua_regconstinteger(L, PMF_TIME_KNOCKBACK);
+    lua_regconstinteger(L, PMF_TIME_WATERJUMP);
+    lua_regconstinteger(L, PMF_RESPAWNED);
+    lua_regconstinteger(L, PMF_FLAILING);
+    lua_regconstinteger(L, PMF_FOLLOW);
+    lua_regconstinteger(L, PMF_LIMBO);
+    lua_regconstinteger(L, PMF_TIME_LOCKPLAYER);
+    
+    // Weapon state constants (WEAPON_*)
+    lua_regconstinteger(L, WEAPON_READY);
+    lua_regconstinteger(L, WEAPON_RAISING);
+    lua_regconstinteger(L, WEAPON_RAISING_TORELOAD);
+    lua_regconstinteger(L, WEAPON_DROPPING);
+    lua_regconstinteger(L, WEAPON_DROPPING_TORELOAD);
+    lua_regconstinteger(L, WEAPON_READYING);
+    lua_regconstinteger(L, WEAPON_RELAXING);
+    lua_regconstinteger(L, WEAPON_FIRING);
+    lua_regconstinteger(L, WEAPON_FIRINGALT);
+    lua_regconstinteger(L, WEAPON_RELOADING);
+    
+    // Additional weapon constants
+    lua_regconstinteger(L, WP_SMOKETRAIL);
+    lua_regconstinteger(L, WP_MAPMORTAR);
+    lua_regconstinteger(L, VERYBIGEXPLOSION);
+    lua_regconstinteger(L, WP_TRIPMINE);
+    lua_regconstinteger(L, WP_DUMMY_MG42);
+    lua_regconstinteger(L, WP_LOCKPICK);
+    lua_regconstinteger(L, WP_POISON_SYRINGE);
+    lua_regconstinteger(L, WP_ADRENALINE_SHARE);
+    lua_regconstinteger(L, WP_M97);
+    lua_regconstinteger(L, WP_POISON_GAS);
+    lua_regconstinteger(L, WP_LANDMINE_BBETTY);
+    lua_regconstinteger(L, WP_LANDMINE_PGAS);
+    lua_regconstinteger(L, WP_MOLOTOV);
+    
     // Pop the et table
     lua_pop(L, 1);
 }
