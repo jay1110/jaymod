@@ -37,6 +37,7 @@ Jaymod is a popular server-side modification for **Wolfenstein: Enemy Territory*
 | **Private Messages** | Send private messages between players | `g_privateMessages` |
 | **Banners** | Rotating server messages | `g_banners` |
 | **Watermark** | Display server watermark on screen | `g_watermark` |
+| **Trip Mines** | Engineers (skill lvl 3+) can place laser-triggered tripmine explosives | `g_weapons` (8192) |
 
 ### Fun Game Modes
 

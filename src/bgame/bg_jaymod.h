@@ -23,6 +23,7 @@
 #define SBW_M97            0x0400 // 1024
 #define SBW_NOADRENALINE   0x0800 // 2048
 #define SBW_MOLOTOV        0x1000 // 4096
+#define SBW_TRIPMINE       0x2000 // 8192
 
 // Class carryovers
 #define SBS_COPS		1

@@ -4859,6 +4859,7 @@ static void PM_Weapon( void ) {
 		case WP_POISON_GAS:
 		case WP_SMOKE_BOMB:
 		case WP_SMOKE_MARKER:
+		case WP_TRIPMINE:
  			PM_AddEvent( EV_NOAMMO );
 			break;
 
