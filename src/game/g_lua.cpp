@@ -4562,7 +4562,9 @@ qboolean G_LuaRunIsolated(const char* modName)
 {
     int freeVM, flen = 0;
     char filename[MAX_QPATH];
+    char allowedModules[MAX_CVAR_VALUE_STRING];
     char* code;
+    char signature[41];
     fileHandle_t f;
     lua_vm_t* vm;
 
@@ -4584,6 +4586,11 @@ qboolean G_LuaRunIsolated(const char* modName)
     if (strlen(filename) < 4 || Q_stricmp(filename + strlen(filename) - 4, ".lua") != 0) {
         Q_strcat(filename, sizeof(filename), ".lua");
     }
+
+    // Get lua_allowedModules cvar for ACL check
+    trap_Cvar_VariableStringBuffer("lua_allowedModules", allowedModules, sizeof(allowedModules));
+    // Convert to uppercase for case-insensitive comparison
+    Q_strupr(allowedModules);
 
     // Try to open lua file
     flen = trap_FS_FOpenFile(filename, &f, FS_READ);
@@ -4625,21 +4632,54 @@ qboolean G_LuaRunIsolated(const char* modName)
         hash1 ^= (unsigned long)flen;
         hash2 ^= (unsigned long)(flen * 31);
         
-        // Init lua_vm_t struct
-        vm = (lua_vm_t*)malloc(sizeof(lua_vm_t));
-        if (vm == NULL) {
-            G_Printf("Lua API: vm memory allocation error for %s data\n", filename);
+        // Store hash as hex signature (two 32-bit values for portability)
+        Com_sprintf(signature, sizeof(signature), "%08lX%08lX", 
+            hash1 & 0xFFFFFFFF, hash2 & 0xFFFFFFFF);
+    }
+
+    // Check ACL if lua_allowedModules is set
+    if (allowedModules[0] != '\0') {
+        char signatureUpper[41];
+        char* token;
+        char allowedCopy[MAX_CVAR_VALUE_STRING];
+        qboolean found = qfalse;
+        
+        Q_strncpyz(signatureUpper, signature, sizeof(signatureUpper));
+        Q_strupr(signatureUpper);
+        
+        // Make a copy to tokenize (since strtok modifies the string)
+        Q_strncpyz(allowedCopy, allowedModules, sizeof(allowedCopy));
+        
+        // Check each token (space, comma, or semicolon separated)
+        token = strtok(allowedCopy, " ,;");
+        while (token != NULL) {
+            if (Q_stricmp(token, signatureUpper) == 0) {
+                found = qtrue;
+                break;
+            }
+            token = strtok(NULL, " ,;");
+        }
+        
+        if (!found) {
+            // Module signature not in allowed list
+            G_Printf("Lua API: Lua module [%s] [%s] disallowed by ACL\n", filename, signature);
             free(code);
             return qfalse;
         }
-
-        vm->id = -1;
-        Q_strncpyz(vm->file_name, filename, sizeof(vm->file_name));
-        Q_strncpyz(vm->mod_name, "", sizeof(vm->mod_name));
-        // Store hash as hex signature (two 32-bit values for portability)
-        Com_sprintf(vm->mod_signature, sizeof(vm->mod_signature), "%08lX%08lX", 
-            hash1 & 0xFFFFFFFF, hash2 & 0xFFFFFFFF);
     }
+
+    // Init lua_vm_t struct
+    vm = (lua_vm_t*)malloc(sizeof(lua_vm_t));
+    if (vm == NULL) {
+        G_Printf("Lua API: vm memory allocation error for %s data\n", filename);
+        free(code);
+        return qfalse;
+    }
+
+    vm->id = -1;
+    Q_strncpyz(vm->file_name, filename, sizeof(vm->file_name));
+    Q_strncpyz(vm->mod_name, "", sizeof(vm->mod_name));
+    Q_strncpyz(vm->mod_signature, signature, sizeof(vm->mod_signature));
     vm->code = code;
     vm->code_size = flen;
     vm->err = 0;
