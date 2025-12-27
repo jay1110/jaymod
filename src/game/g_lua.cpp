@@ -6,6 +6,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <bgame/impl.h>
+#include <bgame/surfaceflags.h>
 #include <game/g_lua.h>
 
 // Forward declarations for external functions
@@ -3860,6 +3861,9 @@ static const luaL_Reg etlib[] = {
 #define lua_regconstinteger(L, n) \
     (lua_pushstring(L, #n), lua_pushinteger(L, n), lua_settable(L, -3))
 
+#define lua_setconstinteger(L, name, value) \
+    (lua_pushstring(L, name), lua_pushinteger(L, value), lua_settable(L, -3))
+
 ///////////////////////////////////////////////////////////////////////////////
 // G_LuaRegisterConstants - Register game constants for Lua scripts
 ///////////////////////////////////////////////////////////////////////////////
@@ -4095,6 +4099,85 @@ static void G_LuaRegisterConstants(lua_State* L)
     lua_regconstinteger(L, STATE_DEFAULT);
     lua_regconstinteger(L, STATE_INVISIBLE);
     lua_regconstinteger(L, STATE_UNDERCONSTRUCTION);
+    
+    // Game state constants (GS_*)
+    lua_regconstinteger(L, GS_INITIALIZE);
+    lua_regconstinteger(L, GS_PLAYING);
+    lua_regconstinteger(L, GS_WARMUP_COUNTDOWN);
+    lua_regconstinteger(L, GS_WARMUP);
+    lua_regconstinteger(L, GS_INTERMISSION);
+    lua_regconstinteger(L, GS_WAITING_FOR_PLAYERS);
+    lua_regconstinteger(L, GS_RESET);
+    
+    // Contents constants (for trap_Trace masks)
+    lua_regconstinteger(L, CONTENTS_SOLID);
+    lua_regconstinteger(L, CONTENTS_LIGHTGRID);
+    lua_regconstinteger(L, CONTENTS_LAVA);
+    lua_regconstinteger(L, CONTENTS_SLIME);
+    lua_regconstinteger(L, CONTENTS_WATER);
+    lua_regconstinteger(L, CONTENTS_FOG);
+    lua_regconstinteger(L, CONTENTS_MISSILECLIP);
+    lua_regconstinteger(L, CONTENTS_ITEM);
+    lua_regconstinteger(L, CONTENTS_MOVER);
+    lua_regconstinteger(L, CONTENTS_AREAPORTAL);
+    lua_regconstinteger(L, CONTENTS_PLAYERCLIP);
+    lua_regconstinteger(L, CONTENTS_MONSTERCLIP);
+    lua_regconstinteger(L, CONTENTS_TELEPORTER);
+    lua_regconstinteger(L, CONTENTS_JUMPPAD);
+    lua_regconstinteger(L, CONTENTS_CLUSTERPORTAL);
+    lua_regconstinteger(L, CONTENTS_DONOTENTER);
+    lua_regconstinteger(L, CONTENTS_DONOTENTER_LARGE);
+    lua_regconstinteger(L, CONTENTS_ORIGIN);
+    lua_regconstinteger(L, CONTENTS_BODY);
+    lua_regconstinteger(L, CONTENTS_CORPSE);
+    lua_regconstinteger(L, CONTENTS_DETAIL);
+    lua_regconstinteger(L, CONTENTS_STRUCTURAL);
+    lua_regconstinteger(L, CONTENTS_TRANSLUCENT);
+    lua_regconstinteger(L, CONTENTS_TRIGGER);
+    lua_regconstinteger(L, CONTENTS_NODROP);
+    
+    // Surface flags (SURF_*)
+    lua_regconstinteger(L, SURF_NODAMAGE);
+    lua_regconstinteger(L, SURF_SLICK);
+    lua_regconstinteger(L, SURF_SKY);
+    lua_regconstinteger(L, SURF_LADDER);
+    lua_regconstinteger(L, SURF_NOIMPACT);
+    lua_regconstinteger(L, SURF_NOMARKS);
+    lua_regconstinteger(L, SURF_SPLASH);
+    lua_regconstinteger(L, SURF_NODRAW);
+    lua_regconstinteger(L, SURF_HINT);
+    lua_regconstinteger(L, SURF_SKIP);
+    lua_regconstinteger(L, SURF_NOLIGHTMAP);
+    lua_regconstinteger(L, SURF_POINTLIGHT);
+    lua_regconstinteger(L, SURF_METAL);
+    lua_regconstinteger(L, SURF_NOSTEPS);
+    lua_regconstinteger(L, SURF_NONSOLID);
+    lua_regconstinteger(L, SURF_LIGHTFILTER);
+    lua_regconstinteger(L, SURF_ALPHASHADOW);
+    lua_regconstinteger(L, SURF_NODLIGHT);
+    lua_regconstinteger(L, SURF_WOOD);
+    lua_regconstinteger(L, SURF_GRASS);
+    lua_regconstinteger(L, SURF_GRAVEL);
+    lua_regconstinteger(L, SURF_GLASS);
+    lua_regconstinteger(L, SURF_SNOW);
+    lua_regconstinteger(L, SURF_ROOF);
+    lua_regconstinteger(L, SURF_RUBBLE);
+    lua_regconstinteger(L, SURF_CARPET);
+    lua_regconstinteger(L, SURF_MONSTERSLICK);
+    lua_regconstinteger(L, SURF_MONSLICK_W);
+    lua_regconstinteger(L, SURF_MONSLICK_N);
+    lua_regconstinteger(L, SURF_MONSLICK_E);
+    lua_regconstinteger(L, SURF_MONSLICK_S);
+    lua_regconstinteger(L, SURF_LANDMINE);
+    
+    // Mask constants (common combinations for tracing)
+    lua_setconstinteger(L, "MASK_ALL", -1);
+    lua_setconstinteger(L, "MASK_SOLID", CONTENTS_SOLID);
+    lua_setconstinteger(L, "MASK_PLAYERSOLID", CONTENTS_SOLID | CONTENTS_PLAYERCLIP | CONTENTS_BODY);
+    lua_setconstinteger(L, "MASK_WATER", CONTENTS_WATER | CONTENTS_LAVA | CONTENTS_SLIME);
+    lua_setconstinteger(L, "MASK_OPAQUE", CONTENTS_SOLID | CONTENTS_LAVA);
+    lua_setconstinteger(L, "MASK_SHOT", CONTENTS_SOLID | CONTENTS_BODY | CONTENTS_CORPSE);
+    lua_setconstinteger(L, "MASK_MISSILESHOT", CONTENTS_SOLID | CONTENTS_BODY | CONTENTS_CORPSE | CONTENTS_MISSILECLIP);
     
     // Pop the et table
     lua_pop(L, 1);
