@@ -1150,6 +1150,373 @@ static int _et_InPVS(lua_State* L)
     return 1;
 }
 
+// et.G_ShaderRemap(oldShader, newShader) - Remap a shader
+static int _et_G_ShaderRemap(lua_State* L)
+{
+    const char* oldshader = luaL_checkstring(L, 1);
+    const char* newshader = luaL_checkstring(L, 2);
+    AddRemap(oldshader, newshader, level.time);
+    return 0;
+}
+
+// et.G_ShaderRemapFlush() - Flush shader remaps
+static int _et_G_ShaderRemapFlush(lua_State* L)
+{
+    trap_SetConfigstring(CS_SHADERSTATE, BuildShaderStateConfig());
+    return 0;
+}
+
+// et.GetLevelTime() - Get current level time in milliseconds
+static int _et_GetLevelTime(lua_State* L)
+{
+    lua_pushinteger(L, level.time);
+    return 1;
+}
+
+// et.G_SetGlobalFog(on, time, r, g, b, depthForOpaque) - Set global fog
+static int _et_G_SetGlobalFog(lua_State* L)
+{
+    int on = (int)luaL_checkinteger(L, 1);
+    int time = (int)luaL_checkinteger(L, 2);
+    float r = (float)luaL_checknumber(L, 3);
+    float g = (float)luaL_checknumber(L, 4);
+    float b = (float)luaL_checknumber(L, 5);
+    float depthForOpaque = (float)luaL_checknumber(L, 6);
+    
+    trap_SetConfigstring(CS_GLOBALFOGVARS, va("%i %i %f %f %f %f", on, time, r, g, b, depthForOpaque));
+    return 0;
+}
+
+// et.G_CreateEntity(classname) - Create a new entity with classname
+static int _et_G_CreateEntity(lua_State* L)
+{
+    const char* classname = luaL_checkstring(L, 1);
+    gentity_t* ent = G_Spawn();
+    
+    if (ent) {
+        ent->classname = (char*)classname;
+        lua_pushinteger(L, ent - g_entities);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
+}
+
+// et.G_SetEntHealth(entnum, health) - Set entity health
+static int _et_G_SetEntHealth(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    int health = (int)luaL_checkinteger(L, 2);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        return 0;
+    }
+    
+    g_entities[entnum].health = health;
+    return 0;
+}
+
+// et.G_GetEntHealth(entnum) - Get entity health
+static int _et_G_GetEntHealth(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, g_entities[entnum].health);
+    return 1;
+}
+
+// et.G_GetEntInuse(entnum) - Check if entity is in use
+static int _et_G_GetEntInuse(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+    
+    lua_pushboolean(L, g_entities[entnum].inuse);
+    return 1;
+}
+
+// et.GetMaxClients() - Get max clients
+static int _et_GetMaxClients(lua_State* L)
+{
+    lua_pushinteger(L, level.maxclients);
+    return 1;
+}
+
+// et.GetNumClients() - Get current number of connected clients
+static int _et_GetNumClients(lua_State* L)
+{
+    lua_pushinteger(L, level.numConnectedClients);
+    return 1;
+}
+
+// et.GetNumPlayingClients() - Get number of playing clients
+static int _et_GetNumPlayingClients(lua_State* L)
+{
+    lua_pushinteger(L, level.numPlayingClients);
+    return 1;
+}
+
+// et.G_IsVotingEnabled() - Check if voting is enabled
+static int _et_G_IsVotingEnabled(lua_State* L)
+{
+    char buff[8];
+    trap_Cvar_VariableStringBuffer("g_allowVote", buff, sizeof(buff));
+    lua_pushboolean(L, atoi(buff));
+    return 1;
+}
+
+// et.G_GetMapName() - Get current map name
+static int _et_G_GetMapName(lua_State* L)
+{
+    char mapname[MAX_STRING_CHARS];
+    trap_Cvar_VariableStringBuffer("mapname", mapname, sizeof(mapname));
+    lua_pushstring(L, mapname);
+    return 1;
+}
+
+// et.G_GetGametype() - Get current game type
+static int _et_G_GetGametype(lua_State* L)
+{
+    lua_pushinteger(L, g_gametype.integer);
+    return 1;
+}
+
+// et.AngleVectors(angles) - Compute forward, right, and up vectors from angles
+static int _et_AngleVectors(lua_State* L)
+{
+    vec3_t angles, forward, right, up;
+    
+    _et_getvec3(L, 1, angles);
+    AngleVectors(angles, forward, right, up);
+    
+    _et_pushvec3(L, forward);
+    _et_pushvec3(L, right);
+    _et_pushvec3(L, up);
+    
+    return 3;
+}
+
+// et.VectorNormalize(vec) - Normalize a vector
+static int _et_VectorNormalize(lua_State* L)
+{
+    vec3_t vec;
+    
+    _et_getvec3(L, 1, vec);
+    VectorNormalize(vec);
+    _et_pushvec3(L, vec);
+    
+    return 1;
+}
+
+// et.VectorLength(vec) - Get length of a vector
+static int _et_VectorLength(lua_State* L)
+{
+    vec3_t vec;
+    
+    _et_getvec3(L, 1, vec);
+    lua_pushnumber(L, VectorLength(vec));
+    
+    return 1;
+}
+
+// et.VectorSubtract(vec1, vec2) - Subtract two vectors
+static int _et_VectorSubtract(lua_State* L)
+{
+    vec3_t vec1, vec2, result;
+    
+    _et_getvec3(L, 1, vec1);
+    _et_getvec3(L, 2, vec2);
+    VectorSubtract(vec1, vec2, result);
+    _et_pushvec3(L, result);
+    
+    return 1;
+}
+
+// et.VectorAdd(vec1, vec2) - Add two vectors
+static int _et_VectorAdd(lua_State* L)
+{
+    vec3_t vec1, vec2, result;
+    
+    _et_getvec3(L, 1, vec1);
+    _et_getvec3(L, 2, vec2);
+    VectorAdd(vec1, vec2, result);
+    _et_pushvec3(L, result);
+    
+    return 1;
+}
+
+// et.VectorScale(vec, scale) - Scale a vector
+static int _et_VectorScale(lua_State* L)
+{
+    vec3_t vec, result;
+    float scale = (float)luaL_checknumber(L, 2);
+    
+    _et_getvec3(L, 1, vec);
+    VectorScale(vec, scale, result);
+    _et_pushvec3(L, result);
+    
+    return 1;
+}
+
+// et.Distance(vec1, vec2) - Get distance between two points
+static int _et_Distance(lua_State* L)
+{
+    vec3_t vec1, vec2;
+    
+    _et_getvec3(L, 1, vec1);
+    _et_getvec3(L, 2, vec2);
+    lua_pushnumber(L, Distance(vec1, vec2));
+    
+    return 1;
+}
+
+// et.G_IsClientConnected(clientnum) - Check if client is connected
+static int _et_G_IsClientConnected(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+    
+    lua_pushboolean(L, level.clients[clientnum].pers.connected != CON_DISCONNECTED);
+    return 1;
+}
+
+// et.G_GetClientTeam(clientnum) - Get client's team
+static int _et_G_GetClientTeam(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, level.clients[clientnum].sess.sessionTeam);
+    return 1;
+}
+
+// et.G_SetClientTeam(clientnum, team) - Set client's team
+static int _et_G_SetClientTeam(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    int team = (int)luaL_checkinteger(L, 2);
+    const char* teamname;
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    switch (team) {
+        case TEAM_AXIS: teamname = "red"; break;
+        case TEAM_ALLIES: teamname = "blue"; break;
+        case TEAM_SPECTATOR: teamname = "spectator"; break;
+        default: teamname = "spectator"; break;
+    }
+    
+    SetTeam(&g_entities[clientnum], teamname, qfalse, (weapon_t)-1, (weapon_t)-1, qtrue);
+    return 0;
+}
+
+// et.G_GetClientClass(clientnum) - Get client's class
+static int _et_G_GetClientClass(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, level.clients[clientnum].sess.playerType);
+    return 1;
+}
+
+// et.G_GetClientName(clientnum) - Get client's name
+static int _et_G_GetClientName(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        lua_pushstring(L, "");
+        return 1;
+    }
+    
+    lua_pushstring(L, level.clients[clientnum].pers.netname);
+    return 1;
+}
+
+// et.G_GetClientPing(clientnum) - Get client's ping
+static int _et_G_GetClientPing(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, level.clients[clientnum].ps.ping);
+    return 1;
+}
+
+// et.G_GetClientGuid(clientnum) - Get client's GUID
+static int _et_G_GetClientGuid(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    char userinfo[MAX_INFO_STRING];
+    const char* guid;
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        lua_pushstring(L, "");
+        return 1;
+    }
+    
+    trap_GetUserinfo(clientnum, userinfo, sizeof(userinfo));
+    guid = Info_ValueForKey(userinfo, "cl_guid");
+    lua_pushstring(L, guid);
+    return 1;
+}
+
+// et.G_IsClientSpectator(clientnum) - Check if client is a spectator
+static int _et_G_IsClientSpectator(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+    
+    lua_pushboolean(L, level.clients[clientnum].sess.sessionTeam == TEAM_SPECTATOR);
+    return 1;
+}
+
+// et.G_ClientIsBot(clientnum) - Check if client is a bot
+static int _et_G_ClientIsBot(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+    
+    lua_pushboolean(L, g_entities[clientnum].r.svFlags & SVF_BOT);
+    return 1;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Lua library registration
 ///////////////////////////////////////////////////////////////////////////////
@@ -1244,6 +1611,46 @@ static const luaL_Reg etlib[] = {
     { "trap_Trace",              _et_trap_Trace              },
     { "trap_PointContents",      _et_trap_PointContents      },
     { "InPVS",                   _et_InPVS                   },
+    
+    // Shader
+    { "G_ShaderRemap",           _et_G_ShaderRemap           },
+    { "G_ShaderRemapFlush",      _et_G_ShaderRemapFlush      },
+    
+    // Level/Time
+    { "GetLevelTime",            _et_GetLevelTime            },
+    { "G_SetGlobalFog",          _et_G_SetGlobalFog          },
+    { "GetMaxClients",           _et_GetMaxClients           },
+    { "GetNumClients",           _et_GetNumClients           },
+    { "GetNumPlayingClients",    _et_GetNumPlayingClients    },
+    { "G_IsVotingEnabled",       _et_G_IsVotingEnabled       },
+    { "G_GetMapName",            _et_G_GetMapName            },
+    { "G_GetGametype",           _et_G_GetGametype           },
+    
+    // Entity creation/health
+    { "G_CreateEntity",          _et_G_CreateEntity          },
+    { "G_SetEntHealth",          _et_G_SetEntHealth          },
+    { "G_GetEntHealth",          _et_G_GetEntHealth          },
+    { "G_GetEntInuse",           _et_G_GetEntInuse           },
+    
+    // Vector math
+    { "AngleVectors",            _et_AngleVectors            },
+    { "VectorNormalize",         _et_VectorNormalize         },
+    { "VectorLength",            _et_VectorLength            },
+    { "VectorSubtract",          _et_VectorSubtract          },
+    { "VectorAdd",               _et_VectorAdd               },
+    { "VectorScale",             _et_VectorScale             },
+    { "Distance",                _et_Distance                },
+    
+    // Client info
+    { "G_IsClientConnected",     _et_G_IsClientConnected     },
+    { "G_GetClientTeam",         _et_G_GetClientTeam         },
+    { "G_SetClientTeam",         _et_G_SetClientTeam         },
+    { "G_GetClientClass",        _et_G_GetClientClass        },
+    { "G_GetClientName",         _et_G_GetClientName         },
+    { "G_GetClientPing",         _et_G_GetClientPing         },
+    { "G_GetClientGuid",         _et_G_GetClientGuid         },
+    { "G_IsClientSpectator",     _et_G_IsClientSpectator     },
+    { "G_ClientIsBot",           _et_G_ClientIsBot           },
     
     // Miscellaneous
     { "trap_Milliseconds",       _et_trap_Milliseconds       },
