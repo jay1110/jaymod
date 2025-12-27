@@ -53,6 +53,9 @@ void G_LuaRestart(void);
 // Print status of loaded Lua modules
 void G_LuaStatus(gentity_t* ent);
 
+// Dump the Lua API to console (lua_api command)
+void G_LuaStackDump(void);
+
 // Start a Lua VM
 qboolean G_LuaStartVM(lua_vm_t* vm);
 
@@ -125,6 +128,21 @@ void G_LuaHook_Revive(int clientNum, int reviverNum);
 
 // Called when a player's skill is set
 qboolean G_LuaHook_SetPlayerSkill(int clientNum, int skill, int level);
+
+// Called when a player gets a skill upgrade
+qboolean G_LuaHook_UpgradeSkill(int clientNum, int skill);
+
+// Called when a fixed MG42 is fired
+qboolean G_LuaHook_FixedMGFire(int clientNum);
+
+// Called when a mounted MG42 is fired
+qboolean G_LuaHook_MountedMGFire(int clientNum);
+
+// Called when an anti-aircraft gun is fired
+qboolean G_LuaHook_AAGunFire(int clientNum);
+
+// Called when entities are spawned from map string
+void G_LuaHook_SpawnEntitiesFromString(void);
 
 ///////////////////////////////////////////////////////////////////////////////
 
