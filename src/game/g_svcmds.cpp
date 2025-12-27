@@ -1130,6 +1130,11 @@ qboolean	ConsoleCommand( void ) {
 		return qtrue;
 	}
 
+	if (!Q_stricmp(cmd, "lua_api")) {
+		G_LuaStackDump();
+		return qtrue;
+	}
+
 	if (!Q_stricmp(cmd, "lua_restart")) {
 		G_LuaRestart();
 		return qtrue;

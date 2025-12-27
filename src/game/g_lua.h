@@ -53,6 +53,9 @@ void G_LuaRestart(void);
 // Print status of loaded Lua modules
 void G_LuaStatus(gentity_t* ent);
 
+// Dump the Lua API to console (lua_api command)
+void G_LuaStackDump(void);
+
 // Start a Lua VM
 qboolean G_LuaStartVM(lua_vm_t* vm);
 

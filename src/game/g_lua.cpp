@@ -4839,6 +4839,64 @@ void G_LuaStatus(gentity_t* ent)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// G_LuaStackDump - Dump the Lua API to console (lua_api command)
+///////////////////////////////////////////////////////////////////////////////
+
+void G_LuaStackDump(void)
+{
+    lua_vm_t* vm;
+    
+    vm = (lua_vm_t*)malloc(sizeof(lua_vm_t));
+    if (vm == NULL) {
+        G_Printf("Lua API: memory allocation error\n");
+        return;
+    }
+
+    Q_strncpyz(vm->file_name, "current API available to scripts", sizeof(vm->file_name));
+    vm->code = (char*)"";
+    vm->code_size = 0;
+    vm->err = 0;
+    vm->id = -1;
+    vm->L = NULL;
+    Q_strncpyz(vm->mod_name, "", sizeof(vm->mod_name));
+    Q_strncpyz(vm->mod_signature, "", sizeof(vm->mod_signature));
+
+    // Start lua virtual machine
+    if (G_LuaStartVM(vm)) {
+        lua_State* L = vm->L;
+
+        lua_getglobal(L, "et");
+        if (!lua_istable(L, -1)) {
+            G_Printf("Lua API: error - et prefix is not correctly registered\n");
+        } else {
+            int i, types[] = { LUA_TSTRING, LUA_TTABLE, LUA_TBOOLEAN, LUA_TNUMBER, LUA_TFUNCTION };
+            const char* typeNames[] = { "string", "table", "boolean", "number", "function" };
+
+            G_Printf("----------------------------------------------------------------\n");
+            G_Printf("%-42s%-17s%-10s\n", "Name", "Type", "Value");
+            G_Printf("----------------------------------------------------------------\n");
+
+            // et namespace
+            for (i = 0; i < 5; i++) {
+                lua_pushnil(L); // stack now contains: -1 => nil; -2 => table
+                while (lua_next(L, -2)) {
+                    // order by variable data type
+                    if (lua_type(L, -1) == types[i]) {
+                        const char* name = lua_tostring(L, -2);
+                        const char* value = lua_isfunction(L, -1) ? "N/A" : lua_tostring(L, -1);
+                        G_Printf("et.%-39s%-17s%-10s\n", name ? name : "", typeNames[i], value ? value : "");
+                    }
+                    lua_pop(L, 1);
+                }
+            }
+        }
+        lua_close(vm->L);
+        vm->L = NULL;
+    }
+    free(vm);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // Lua Callback Hooks - Called from game code to invoke Lua scripts
 ///////////////////////////////////////////////////////////////////////////////
 
