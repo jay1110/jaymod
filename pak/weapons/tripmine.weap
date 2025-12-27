@@ -1,0 +1,22 @@
+weaponDef
+{
+	client {
+		
+		weaponConfig	"models/multiplayer/landmine/weapon.cfg"
+		handsModel		"models/multiplayer/landmine/v_landmine_hand.md3"
+		
+		flashSound		"sound/weapons/misc/fire_water.wav"
+
+		weaponSelectedIcon	"icons/iconw_tripmine_1_select.tga"
+		
+		missileModel		"models/multiplayer/tripmine/tripmine.md3"
+		
+		firstPerson {
+			model			"models/multiplayer/tripmine/v_tripmine.md3"
+		}
+		
+		thirdPerson {
+			model		        "models/multiplayer/tripmine/tripmine.md3"
+		}
+	}
+}

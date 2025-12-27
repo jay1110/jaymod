@@ -442,3 +442,14 @@ icons/iconw_radio_1_select
         rgbGen vertex
     }
 }
+
+icons/iconw_tripmine_1_select
+{
+	nomipmaps
+	nopicmip
+	{
+		map icons/iconw_tripmine_1_select.tga
+		blendFunc blend
+		rgbGen vertex
+	}
+}

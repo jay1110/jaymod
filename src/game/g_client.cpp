@@ -843,6 +843,9 @@ void G_AddClassSpecificTools(gclient_t *client)
             if ((cvars::bg_weapons.ivalue & SBW_MOLOTOV) && client->sess.skill[SK_LIGHT_WEAPONS] >= 2)
 			    AddWeaponToPlayer(client, WP_MOLOTOV, GetAmmoTableData(WP_MOLOTOV)->defaultStartingAmmo, GetAmmoTableData(WP_MOLOTOV)->defaultStartingClip, qfalse);
 
+            if ((cvars::bg_weapons.ivalue & SBW_TRIPMINE) && client->sess.skill[SK_EXPLOSIVES_AND_CONSTRUCTION] >= 3)
+                AddWeaponToPlayer(client, WP_TRIPMINE, GetAmmoTableData(WP_TRIPMINE)->defaultStartingAmmo, GetAmmoTableData(WP_TRIPMINE)->defaultStartingClip, qfalse);
+
 			if (client->sess.skill[SK_EXPLOSIVES_AND_CONSTRUCTION] >= 5) {
 				if (cvars::bg_sk5_eng.ivalue & SK5_ENG_LM_BBETTY)
 					AddWeaponToPlayer(client, WP_LANDMINE_BBETTY, GetAmmoTableData(WP_LANDMINE_BBETTY)->defaultStartingAmmo, GetAmmoTableData(WP_LANDMINE_BBETTY)->defaultStartingClip, qfalse );
