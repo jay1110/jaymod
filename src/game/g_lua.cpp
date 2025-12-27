@@ -2559,6 +2559,953 @@ static int _et_G_SetNextThinkTime(lua_State* L)
     return 0;
 }
 
+// ============================================================================
+// Batch 7: Mute, Historical Trace, Commands, Game Control, Bot functions
+// ============================================================================
+
+// et.MutePlayer(clientNum, duration, reason) - Mute a player
+static int _et_MutePlayer(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    // int duration = (int)luaL_optinteger(L, 2, 0);  // duration parameter (unused currently)
+    const char* reason = luaL_optstring(L, 3, "");
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        return 0;
+    }
+    
+    // Mute through the User system
+    if (connectedUsers[clientNum]) {
+        connectedUsers[clientNum]->muted = true;
+    }
+    
+    // Notify player
+    trap_SendServerCommand(clientNum, va("print \"You have been muted%s%s\n\"", 
+        reason[0] ? ": " : "", reason));
+    
+    return 0;
+}
+
+// et.UnmutePlayer(clientNum) - Unmute a player
+static int _et_UnmutePlayer(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        return 0;
+    }
+    
+    // Unmute through the User system
+    if (connectedUsers[clientNum]) {
+        connectedUsers[clientNum]->muted = false;
+    }
+    
+    trap_SendServerCommand(clientNum, "print \"You have been unmuted\n\"");
+    
+    return 0;
+}
+
+// et.G_IsPlayerMuted(clientNum) - Check if player is muted
+static int _et_G_IsPlayerMuted(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+    
+    // Check through the User system
+    if (connectedUsers[clientNum]) {
+        lua_pushboolean(L, connectedUsers[clientNum]->muted);
+    } else {
+        lua_pushboolean(L, 0);
+    }
+    return 1;
+}
+
+// et.G_HistoricalTrace(start, end, passentitynum, mask) - Historical trace for antilag
+static int _et_G_HistoricalTrace(lua_State* L)
+{
+    trace_t tr;
+    vec3_t start, end;
+    
+    // Get start position
+    lua_rawgeti(L, 1, 1);
+    start[0] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    lua_rawgeti(L, 1, 2);
+    start[1] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    lua_rawgeti(L, 1, 3);
+    start[2] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    
+    // Get end position
+    lua_rawgeti(L, 2, 1);
+    end[0] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    lua_rawgeti(L, 2, 2);
+    end[1] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    lua_rawgeti(L, 2, 3);
+    end[2] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    
+    int passEntityNum = (int)luaL_optinteger(L, 3, ENTITYNUM_NONE);
+    int mask = (int)luaL_optinteger(L, 4, MASK_SHOT);
+    
+    // Do a regular trace (historical trace requires antilag system)
+    trap_Trace(&tr, start, NULL, NULL, end, passEntityNum, mask);
+    
+    // Return trace results
+    lua_newtable(L);
+    
+    lua_pushboolean(L, tr.allsolid);
+    lua_setfield(L, -2, "allsolid");
+    
+    lua_pushboolean(L, tr.startsolid);
+    lua_setfield(L, -2, "startsolid");
+    
+    lua_pushnumber(L, tr.fraction);
+    lua_setfield(L, -2, "fraction");
+    
+    lua_newtable(L);
+    lua_pushnumber(L, tr.endpos[0]);
+    lua_rawseti(L, -2, 1);
+    lua_pushnumber(L, tr.endpos[1]);
+    lua_rawseti(L, -2, 2);
+    lua_pushnumber(L, tr.endpos[2]);
+    lua_rawseti(L, -2, 3);
+    lua_setfield(L, -2, "endpos");
+    
+    lua_pushinteger(L, tr.entityNum);
+    lua_setfield(L, -2, "entityNum");
+    
+    lua_pushinteger(L, tr.surfaceFlags);
+    lua_setfield(L, -2, "surfaceFlags");
+    
+    lua_pushinteger(L, tr.contents);
+    lua_setfield(L, -2, "contents");
+    
+    return 1;
+}
+
+// et.G_GetBoundingBox(entityNum) - Get entity bounding box
+static int _et_G_GetBoundingBox(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    if (!ent->inuse) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    // Return mins
+    lua_newtable(L);
+    lua_pushnumber(L, ent->r.mins[0]);
+    lua_rawseti(L, -2, 1);
+    lua_pushnumber(L, ent->r.mins[1]);
+    lua_rawseti(L, -2, 2);
+    lua_pushnumber(L, ent->r.mins[2]);
+    lua_rawseti(L, -2, 3);
+    
+    // Return maxs
+    lua_newtable(L);
+    lua_pushnumber(L, ent->r.maxs[0]);
+    lua_rawseti(L, -2, 1);
+    lua_pushnumber(L, ent->r.maxs[1]);
+    lua_rawseti(L, -2, 2);
+    lua_pushnumber(L, ent->r.maxs[2]);
+    lua_rawseti(L, -2, 3);
+    
+    return 2;
+}
+
+// et.G_SetBoundingBox(entityNum, mins, maxs) - Set entity bounding box
+static int _et_G_SetBoundingBox(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    if (!ent->inuse) {
+        return 0;
+    }
+    
+    // Get mins
+    lua_rawgeti(L, 2, 1);
+    ent->r.mins[0] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    lua_rawgeti(L, 2, 2);
+    ent->r.mins[1] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    lua_rawgeti(L, 2, 3);
+    ent->r.mins[2] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    
+    // Get maxs
+    lua_rawgeti(L, 3, 1);
+    ent->r.maxs[0] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    lua_rawgeti(L, 3, 2);
+    ent->r.maxs[1] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    lua_rawgeti(L, 3, 3);
+    ent->r.maxs[2] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    
+    trap_LinkEntity(ent);
+    return 0;
+}
+
+// et.G_ScoreGet(clientNum) - Get client score
+static int _et_G_ScoreGet(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, ent->client->ps.persistant[PERS_SCORE]);
+    return 1;
+}
+
+// et.G_ScoreSet(clientNum, score) - Set client score
+static int _et_G_ScoreSet(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int score = (int)luaL_checkinteger(L, 2);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        return 0;
+    }
+    
+    ent->client->ps.persistant[PERS_SCORE] = score;
+    return 0;
+}
+
+// et.G_KillsGet(clientNum) - Get client kills
+static int _et_G_KillsGet(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, ent->client->sess.kills);
+    return 1;
+}
+
+// et.G_KillsSet(clientNum, kills) - Set client kills
+static int _et_G_KillsSet(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int kills = (int)luaL_checkinteger(L, 2);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        return 0;
+    }
+    
+    ent->client->sess.kills = kills;
+    return 0;
+}
+
+// et.G_DeathsGet(clientNum) - Get client deaths
+static int _et_G_DeathsGet(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, ent->client->sess.deaths);
+    return 1;
+}
+
+// et.G_DeathsSet(clientNum, deaths) - Set client deaths
+static int _et_G_DeathsSet(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int deaths = (int)luaL_checkinteger(L, 2);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        return 0;
+    }
+    
+    ent->client->sess.deaths = deaths;
+    return 0;
+}
+
+// et.G_HeadshotsGet(clientNum) - Get client headshots
+static int _et_G_HeadshotsGet(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, ent->client->sess.headshots);
+    return 1;
+}
+
+// et.G_HeadshotsSet(clientNum, headshots) - Set client headshots
+static int _et_G_HeadshotsSet(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int headshots = (int)luaL_checkinteger(L, 2);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        return 0;
+    }
+    
+    ent->client->sess.headshots = headshots;
+    return 0;
+}
+
+// et.G_TeamDamageGet(clientNum) - Get team damage done
+static int _et_G_TeamDamageGet(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, ent->client->sess.team_damage);
+    return 1;
+}
+
+// et.G_TeamDamageSet(clientNum, damage) - Set team damage done
+static int _et_G_TeamDamageSet(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int damage = (int)luaL_checkinteger(L, 2);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        return 0;
+    }
+    
+    ent->client->sess.team_damage = damage;
+    return 0;
+}
+
+// et.G_TeamKillsGet(clientNum) - Get team kills done
+static int _et_G_TeamKillsGet(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, ent->client->sess.team_kills);
+    return 1;
+}
+
+// et.G_TeamKillsSet(clientNum, kills) - Set team kills done
+static int _et_G_TeamKillsSet(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int kills = (int)luaL_checkinteger(L, 2);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        return 0;
+    }
+    
+    ent->client->sess.team_kills = kills;
+    return 0;
+}
+
+// et.G_RevivesGet(clientNum) - Get revives done
+static int _et_G_RevivesGet(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, ent->client->sess.revives);
+    return 1;
+}
+
+// et.G_RevivesSet(clientNum, revives) - Set revives done
+static int _et_G_RevivesSet(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int revives = (int)luaL_checkinteger(L, 2);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        return 0;
+    }
+    
+    ent->client->sess.revives = revives;
+    return 0;
+}
+
+// et.G_GetEntityClassname(entityNum) - Get entity classname
+static int _et_G_GetEntityClassname(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    if (!ent->inuse || !ent->classname) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushstring(L, ent->classname);
+    return 1;
+}
+
+// et.G_SetEntityClassname(entityNum, classname) - Set entity classname
+static int _et_G_SetEntityClassname(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    const char* classname = luaL_checkstring(L, 2);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    if (!ent->inuse) {
+        return 0;
+    }
+    
+    ent->classname = (char*)classname;
+    return 0;
+}
+
+// et.G_GetEntityTargetname(entityNum) - Get entity targetname
+static int _et_G_GetEntityTargetname(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    if (!ent->inuse || !ent->targetname) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushstring(L, ent->targetname);
+    return 1;
+}
+
+// et.G_SetEntityTargetname(entityNum, targetname) - Set entity targetname
+static int _et_G_SetEntityTargetname(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    const char* targetname = luaL_checkstring(L, 2);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    if (!ent->inuse) {
+        return 0;
+    }
+    
+    ent->targetname = (char*)targetname;
+    return 0;
+}
+
+// et.G_SpawnInfo(entityNum) - Get spawn info for an entity
+static int _et_G_SpawnInfo(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    if (!ent->inuse) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_newtable(L);
+    
+    if (ent->classname) {
+        lua_pushstring(L, ent->classname);
+        lua_setfield(L, -2, "classname");
+    }
+    
+    if (ent->targetname) {
+        lua_pushstring(L, ent->targetname);
+        lua_setfield(L, -2, "targetname");
+    }
+    
+    if (ent->target) {
+        lua_pushstring(L, ent->target);
+        lua_setfield(L, -2, "target");
+    }
+    
+    lua_pushinteger(L, ent->spawnflags);
+    lua_setfield(L, -2, "spawnflags");
+    
+    lua_newtable(L);
+    lua_pushnumber(L, ent->s.origin[0]);
+    lua_rawseti(L, -2, 1);
+    lua_pushnumber(L, ent->s.origin[1]);
+    lua_rawseti(L, -2, 2);
+    lua_pushnumber(L, ent->s.origin[2]);
+    lua_rawseti(L, -2, 3);
+    lua_setfield(L, -2, "origin");
+    
+    lua_newtable(L);
+    lua_pushnumber(L, ent->s.angles[0]);
+    lua_rawseti(L, -2, 1);
+    lua_pushnumber(L, ent->s.angles[1]);
+    lua_rawseti(L, -2, 2);
+    lua_pushnumber(L, ent->s.angles[2]);
+    lua_rawseti(L, -2, 3);
+    lua_setfield(L, -2, "angles");
+    
+    return 1;
+}
+
+// et.G_IterateEntities(startNum, classname) - Find entities by classname
+static int _et_G_IterateEntities(lua_State* L)
+{
+    int startNum = (int)luaL_optinteger(L, 1, 0);
+    const char* classname = luaL_optstring(L, 2, NULL);
+    
+    for (int i = startNum; i < MAX_GENTITIES; i++) {
+        gentity_t* ent = &g_entities[i];
+        if (ent->inuse) {
+            if (!classname || (ent->classname && !strcmp(ent->classname, classname))) {
+                lua_pushinteger(L, i);
+                return 1;
+            }
+        }
+    }
+    
+    lua_pushnil(L);
+    return 1;
+}
+
+// et.G_GetPlayerIP(clientNum) - Get player IP address
+static int _et_G_GetPlayerIP(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    // Get IP from userinfo
+    char userinfo[MAX_INFO_STRING];
+    trap_GetUserinfo(clientNum, userinfo, sizeof(userinfo));
+    
+    const char* ip = Info_ValueForKey(userinfo, "ip");
+    if (ip && ip[0]) {
+        lua_pushstring(L, ip);
+    } else {
+        lua_pushstring(L, "");
+    }
+    return 1;
+}
+
+// et.G_GetPlayerRate(clientNum) - Get player connection rate
+static int _et_G_GetPlayerRate(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    char userinfo[MAX_INFO_STRING];
+    trap_GetUserinfo(clientNum, userinfo, sizeof(userinfo));
+    
+    const char* rate = Info_ValueForKey(userinfo, "rate");
+    if (rate && rate[0]) {
+        lua_pushinteger(L, atoi(rate));
+    } else {
+        lua_pushinteger(L, 0);
+    }
+    return 1;
+}
+
+// et.G_GetPlayerSnaps(clientNum) - Get player snaps setting
+static int _et_G_GetPlayerSnaps(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    char userinfo[MAX_INFO_STRING];
+    trap_GetUserinfo(clientNum, userinfo, sizeof(userinfo));
+    
+    const char* snaps = Info_ValueForKey(userinfo, "snaps");
+    if (snaps && snaps[0]) {
+        lua_pushinteger(L, atoi(snaps));
+    } else {
+        lua_pushinteger(L, 0);
+    }
+    return 1;
+}
+
+// et.G_GetPlayerMaxPackets(clientNum) - Get player cl_maxpackets setting
+static int _et_G_GetPlayerMaxPackets(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    char userinfo[MAX_INFO_STRING];
+    trap_GetUserinfo(clientNum, userinfo, sizeof(userinfo));
+    
+    const char* maxpackets = Info_ValueForKey(userinfo, "cl_maxpackets");
+    if (maxpackets && maxpackets[0]) {
+        lua_pushinteger(L, atoi(maxpackets));
+    } else {
+        lua_pushinteger(L, 0);
+    }
+    return 1;
+}
+
+// et.G_GetPlayerTimeRun(clientNum) - Get player's time spent playing
+static int _et_G_GetPlayerTimeRun(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    // Calculate time from client connection
+    int time = level.time - ent->client->pers.enterTime;
+    lua_pushinteger(L, time);
+    return 1;
+}
+
+// et.G_SetPlayerRespawnTime(clientNum, time) - Set player respawn delay
+static int _et_G_SetPlayerRespawnTime(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int time = (int)luaL_checkinteger(L, 2);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        return 0;
+    }
+    
+    ent->client->respawnTime = level.time + time;
+    return 0;
+}
+
+// et.G_GetPlayerRespawnTime(clientNum) - Get player respawn time
+static int _et_G_GetPlayerRespawnTime(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[clientNum];
+    if (!ent->client) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, ent->client->respawnTime);
+    return 1;
+}
+
+// et.G_GetEntityModel(entityNum) - Get entity model
+static int _et_G_GetEntityModel(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    if (!ent->inuse) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    if (ent->model) {
+        lua_pushstring(L, ent->model);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
+}
+
+// et.G_SetEntityModel(entityNum, model) - Set entity model
+static int _et_G_SetEntityModel(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    const char* model = luaL_checkstring(L, 2);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    if (!ent->inuse) {
+        return 0;
+    }
+    
+    ent->model = (char*)model;
+    ent->s.modelindex = G_ModelIndex((char*)model);
+    return 0;
+}
+
+// et.G_GetServerTime() - Get current server time
+static int _et_G_GetServerTime(lua_State* L)
+{
+    lua_pushinteger(L, level.time);
+    return 1;
+}
+
+// et.G_GetRealTime() - Get real (wall clock) milliseconds
+static int _et_G_GetRealTime(lua_State* L)
+{
+    lua_pushinteger(L, trap_Milliseconds());
+    return 1;
+}
+
+// et.G_SetEntityContents(entityNum, contents) - Set entity contents
+static int _et_G_SetEntityContents(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    int contents = (int)luaL_checkinteger(L, 2);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    if (!ent->inuse) {
+        return 0;
+    }
+    
+    ent->r.contents = contents;
+    trap_LinkEntity(ent);
+    return 0;
+}
+
+// et.G_GetEntityContents(entityNum) - Get entity contents
+static int _et_G_GetEntityContents(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    if (!ent->inuse) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, ent->r.contents);
+    return 1;
+}
+
+// et.G_SetEntitySvFlags(entityNum, svflags) - Set entity svFlags
+static int _et_G_SetEntitySvFlags(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    int svFlags = (int)luaL_checkinteger(L, 2);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    if (!ent->inuse) {
+        return 0;
+    }
+    
+    ent->r.svFlags = svFlags;
+    trap_LinkEntity(ent);
+    return 0;
+}
+
+// et.G_GetEntitySvFlags(entityNum) - Get entity svFlags
+static int _et_G_GetEntitySvFlags(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    if (!ent->inuse) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, ent->r.svFlags);
+    return 1;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Lua library registration
 ///////////////////////////////////////////////////////////////////////////////
@@ -2785,6 +3732,49 @@ static const luaL_Reg etlib[] = {
     { "G_FireTeamCount",         _et_G_FireTeamCount         },
     { "G_GetBotEntity",          _et_G_GetBotEntity          },
     { "G_PushDyno",              _et_G_PushDyno              },
+    
+    // Batch 7: Mute, Stats, Entity details, Player info
+    { "MutePlayer",              _et_MutePlayer              },
+    { "UnmutePlayer",            _et_UnmutePlayer            },
+    { "G_IsPlayerMuted",         _et_G_IsPlayerMuted         },
+    { "G_HistoricalTrace",       _et_G_HistoricalTrace       },
+    { "G_GetBoundingBox",        _et_G_GetBoundingBox        },
+    { "G_SetBoundingBox",        _et_G_SetBoundingBox        },
+    { "G_ScoreGet",              _et_G_ScoreGet              },
+    { "G_ScoreSet",              _et_G_ScoreSet              },
+    { "G_KillsGet",              _et_G_KillsGet              },
+    { "G_KillsSet",              _et_G_KillsSet              },
+    { "G_DeathsGet",             _et_G_DeathsGet             },
+    { "G_DeathsSet",             _et_G_DeathsSet             },
+    { "G_HeadshotsGet",          _et_G_HeadshotsGet          },
+    { "G_HeadshotsSet",          _et_G_HeadshotsSet          },
+    { "G_TeamDamageGet",         _et_G_TeamDamageGet         },
+    { "G_TeamDamageSet",         _et_G_TeamDamageSet         },
+    { "G_TeamKillsGet",          _et_G_TeamKillsGet          },
+    { "G_TeamKillsSet",          _et_G_TeamKillsSet          },
+    { "G_RevivesGet",            _et_G_RevivesGet            },
+    { "G_RevivesSet",            _et_G_RevivesSet            },
+    { "G_GetEntityClassname",    _et_G_GetEntityClassname    },
+    { "G_SetEntityClassname",    _et_G_SetEntityClassname    },
+    { "G_GetEntityTargetname",   _et_G_GetEntityTargetname   },
+    { "G_SetEntityTargetname",   _et_G_SetEntityTargetname   },
+    { "G_SpawnInfo",             _et_G_SpawnInfo             },
+    { "G_IterateEntities",       _et_G_IterateEntities       },
+    { "G_GetPlayerIP",           _et_G_GetPlayerIP           },
+    { "G_GetPlayerRate",         _et_G_GetPlayerRate         },
+    { "G_GetPlayerSnaps",        _et_G_GetPlayerSnaps        },
+    { "G_GetPlayerMaxPackets",   _et_G_GetPlayerMaxPackets   },
+    { "G_GetPlayerTimeRun",      _et_G_GetPlayerTimeRun      },
+    { "G_SetPlayerRespawnTime",  _et_G_SetPlayerRespawnTime  },
+    { "G_GetPlayerRespawnTime",  _et_G_GetPlayerRespawnTime  },
+    { "G_GetEntityModel",        _et_G_GetEntityModel        },
+    { "G_SetEntityModel",        _et_G_SetEntityModel        },
+    { "G_GetServerTime",         _et_G_GetServerTime         },
+    { "G_GetRealTime",           _et_G_GetRealTime           },
+    { "G_SetEntityContents",     _et_G_SetEntityContents     },
+    { "G_GetEntityContents",     _et_G_GetEntityContents     },
+    { "G_SetEntitySvFlags",      _et_G_SetEntitySvFlags      },
+    { "G_GetEntitySvFlags",      _et_G_GetEntitySvFlags      },
     
     { NULL,                      NULL                        }
 };
