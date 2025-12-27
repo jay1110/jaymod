@@ -8,6 +8,9 @@
 #include <bgame/impl.h>
 #include <game/g_lua.h>
 
+// Forward declarations for external functions
+void GibEntity(gentity_t* self, int killer);
+
 ///////////////////////////////////////////////////////////////////////////////
 // Global Lua VM array
 ///////////////////////////////////////////////////////////////////////////////
@@ -1517,6 +1520,513 @@ static int _et_G_ClientIsBot(lua_State* L)
     return 1;
 }
 
+// et.G_Find(startEntity, fieldname, value) - Find entity by field value
+static int _et_G_Find(lua_State* L)
+{
+    int startEntity = (int)luaL_optinteger(L, 1, -1);
+    const char* fieldname = luaL_checkstring(L, 2);
+    const char* value = luaL_checkstring(L, 3);
+    gentity_t* start;
+    gentity_t* ent;
+    int i;
+    
+    if (startEntity < -1 || startEntity >= MAX_GENTITIES) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    start = (startEntity == -1) ? NULL : &g_entities[startEntity];
+    
+    // Only support classname for now (most common case)
+    if (!Q_stricmp(fieldname, "classname")) {
+        for (i = (start ? (start - g_entities) + 1 : 0); i < MAX_GENTITIES; i++) {
+            ent = &g_entities[i];
+            if (!ent->inuse) continue;
+            if (ent->classname && !Q_stricmp(ent->classname, value)) {
+                lua_pushinteger(L, i);
+                return 1;
+            }
+        }
+    } else if (!Q_stricmp(fieldname, "targetname")) {
+        for (i = (start ? (start - g_entities) + 1 : 0); i < MAX_GENTITIES; i++) {
+            ent = &g_entities[i];
+            if (!ent->inuse) continue;
+            if (ent->targetname && !Q_stricmp(ent->targetname, value)) {
+                lua_pushinteger(L, i);
+                return 1;
+            }
+        }
+    }
+    
+    lua_pushnil(L);
+    return 1;
+}
+
+// et.G_FindByTargetname(startEntity, targetname) - Find entity by targetname
+static int _et_G_FindByTargetname(lua_State* L)
+{
+    int startEntity = (int)luaL_optinteger(L, 1, -1);
+    const char* targetname = luaL_checkstring(L, 2);
+    gentity_t* ent;
+    int i;
+    
+    for (i = (startEntity == -1 ? 0 : startEntity + 1); i < MAX_GENTITIES; i++) {
+        ent = &g_entities[i];
+        if (!ent->inuse) continue;
+        if (ent->targetname && !Q_stricmp(ent->targetname, targetname)) {
+            lua_pushinteger(L, i);
+            return 1;
+        }
+    }
+    
+    lua_pushnil(L);
+    return 1;
+}
+
+// et.G_Activate(entnum, other, activator) - Activate an entity
+static int _et_G_Activate(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    int othernum = (int)luaL_checkinteger(L, 2);
+    int activatornum = (int)luaL_checkinteger(L, 3);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    gentity_t* other = (othernum >= 0 && othernum < MAX_GENTITIES) ? &g_entities[othernum] : NULL;
+    gentity_t* activator = (activatornum >= 0 && activatornum < MAX_GENTITIES) ? &g_entities[activatornum] : NULL;
+    
+    if (ent->use) {
+        ent->use(ent, other, activator);
+    }
+    
+    return 0;
+}
+
+// et.G_UseEntity(entnum, activator) - Use an entity (trigger)
+static int _et_G_UseEntity(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    int activatornum = (int)luaL_checkinteger(L, 2);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    gentity_t* activator = (activatornum >= 0 && activatornum < MAX_GENTITIES) ? &g_entities[activatornum] : NULL;
+    
+    if (ent->use) {
+        ent->use(ent, activator, activator);
+    }
+    
+    return 0;
+}
+
+// et.G_Random() - Get a random float [0,1)
+static int _et_G_Random(lua_State* L)
+{
+    lua_pushnumber(L, random());
+    return 1;
+}
+
+// et.G_RandomInt(min, max) - Get a random integer in range [min, max]
+static int _et_G_RandomInt(lua_State* L)
+{
+    int min = (int)luaL_checkinteger(L, 1);
+    int max = (int)luaL_checkinteger(L, 2);
+    lua_pushinteger(L, min + (rand() % (max - min + 1)));
+    return 1;
+}
+
+// et.floor(n) - Floor function
+static int _et_floor(lua_State* L)
+{
+    double n = luaL_checknumber(L, 1);
+    lua_pushnumber(L, floor(n));
+    return 1;
+}
+
+// et.ceil(n) - Ceiling function
+static int _et_ceil(lua_State* L)
+{
+    double n = luaL_checknumber(L, 1);
+    lua_pushnumber(L, ceil(n));
+    return 1;
+}
+
+// et.abs(n) - Absolute value
+static int _et_abs(lua_State* L)
+{
+    double n = luaL_checknumber(L, 1);
+    lua_pushnumber(L, fabs(n));
+    return 1;
+}
+
+// et.sin(degrees) - Sine function (degrees)
+static int _et_sin(lua_State* L)
+{
+    double degrees = luaL_checknumber(L, 1);
+    lua_pushnumber(L, sin(DEG2RAD(degrees)));
+    return 1;
+}
+
+// et.cos(degrees) - Cosine function (degrees)
+static int _et_cos(lua_State* L)
+{
+    double degrees = luaL_checknumber(L, 1);
+    lua_pushnumber(L, cos(DEG2RAD(degrees)));
+    return 1;
+}
+
+// et.tan(degrees) - Tangent function (degrees)
+static int _et_tan(lua_State* L)
+{
+    double degrees = luaL_checknumber(L, 1);
+    lua_pushnumber(L, tan(DEG2RAD(degrees)));
+    return 1;
+}
+
+// et.asin(x) - Arc sine function (returns degrees)
+static int _et_asin(lua_State* L)
+{
+    double x = luaL_checknumber(L, 1);
+    lua_pushnumber(L, RAD2DEG(asin(x)));
+    return 1;
+}
+
+// et.acos(x) - Arc cosine function (returns degrees)
+static int _et_acos(lua_State* L)
+{
+    double x = luaL_checknumber(L, 1);
+    lua_pushnumber(L, RAD2DEG(acos(x)));
+    return 1;
+}
+
+// et.atan(x) - Arc tangent function (returns degrees)
+static int _et_atan(lua_State* L)
+{
+    double x = luaL_checknumber(L, 1);
+    lua_pushnumber(L, RAD2DEG(atan(x)));
+    return 1;
+}
+
+// et.atan2(y, x) - Arc tangent of y/x (returns degrees)
+static int _et_atan2(lua_State* L)
+{
+    double y = luaL_checknumber(L, 1);
+    double x = luaL_checknumber(L, 2);
+    lua_pushnumber(L, RAD2DEG(atan2(y, x)));
+    return 1;
+}
+
+// et.sqrt(x) - Square root
+static int _et_sqrt(lua_State* L)
+{
+    double x = luaL_checknumber(L, 1);
+    lua_pushnumber(L, sqrt(x));
+    return 1;
+}
+
+// et.pow(x, y) - Power function
+static int _et_pow(lua_State* L)
+{
+    double x = luaL_checknumber(L, 1);
+    double y = luaL_checknumber(L, 2);
+    lua_pushnumber(L, pow(x, y));
+    return 1;
+}
+
+// et.G_GetGravity() - Get gravity value
+static int _et_G_GetGravity(lua_State* L)
+{
+    lua_pushinteger(L, g_gravity.integer);
+    return 1;
+}
+
+// et.G_SetGravity(gravity) - Set gravity value
+static int _et_G_SetGravity(lua_State* L)
+{
+    int gravity = (int)luaL_checkinteger(L, 1);
+    trap_Cvar_Set("g_gravity", va("%d", gravity));
+    return 0;
+}
+
+// et.G_GetSpeed() - Get player speed modifier
+static int _et_G_GetSpeed(lua_State* L)
+{
+    lua_pushinteger(L, g_speed.integer);
+    return 1;
+}
+
+// et.G_SetSpeed(speed) - Set player speed modifier
+static int _et_G_SetSpeed(lua_State* L)
+{
+    int speed = (int)luaL_checkinteger(L, 1);
+    trap_Cvar_Set("g_speed", va("%d", speed));
+    return 0;
+}
+
+// et.G_ClientKill(clientnum) - Kill a client
+static int _et_G_ClientKill(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientnum];
+    if (ent->client && ent->client->ps.pm_type != PM_DEAD) {
+        ent->flags &= ~FL_GODMODE;
+        ent->client->ps.stats[STAT_HEALTH] = ent->health = 0;
+        player_die(ent, ent, ent, 100000, MOD_SUICIDE);
+    }
+    
+    return 0;
+}
+
+// et.G_Gib(clientnum) - Gib a client
+static int _et_G_Gib(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientnum];
+    if (ent->client) {
+        GibEntity(ent, 0);
+    }
+    
+    return 0;
+}
+
+// et.G_SetAmmo(clientnum, weapon, ammo, ammoclip) - Set ammo for weapon
+static int _et_G_SetAmmo(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    int weapon = (int)luaL_checkinteger(L, 2);
+    int ammo = (int)luaL_optinteger(L, 3, -1);
+    int ammoclip = (int)luaL_optinteger(L, 4, -1);
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    if (weapon < 0 || weapon >= WP_NUM_WEAPONS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientnum];
+    if (ent->client) {
+        if (ammo >= 0) {
+            ent->client->ps.ammo[weapon] = ammo;
+        }
+        if (ammoclip >= 0) {
+            ent->client->ps.ammoclip[weapon] = ammoclip;
+        }
+    }
+    
+    return 0;
+}
+
+// et.G_GetAmmo(clientnum, weapon) - Get ammo for weapon
+static int _et_G_GetAmmo(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    int weapon = (int)luaL_checkinteger(L, 2);
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        lua_pushnil(L);
+        return 2;
+    }
+    
+    if (weapon < 0 || weapon >= WP_NUM_WEAPONS) {
+        lua_pushnil(L);
+        lua_pushnil(L);
+        return 2;
+    }
+    
+    gentity_t* ent = &g_entities[clientnum];
+    if (ent->client) {
+        lua_pushinteger(L, ent->client->ps.ammo[weapon]);
+        lua_pushinteger(L, ent->client->ps.ammoclip[weapon]);
+        return 2;
+    }
+    
+    lua_pushnil(L);
+    lua_pushnil(L);
+    return 2;
+}
+
+// et.G_SetClipAmmo(clientnum, weapon, ammoclip) - Set clip ammo for weapon
+static int _et_G_SetClipAmmo(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    int weapon = (int)luaL_checkinteger(L, 2);
+    int ammoclip = (int)luaL_checkinteger(L, 3);
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    if (weapon < 0 || weapon >= WP_NUM_WEAPONS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientnum];
+    if (ent->client) {
+        ent->client->ps.ammoclip[weapon] = ammoclip;
+    }
+    
+    return 0;
+}
+
+// et.G_ClientHasWeapon(clientnum, weapon) - Check if client has weapon
+static int _et_G_ClientHasWeapon(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    int weapon = (int)luaL_checkinteger(L, 2);
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+    
+    if (weapon < 0 || weapon >= WP_NUM_WEAPONS) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[clientnum];
+    if (ent->client) {
+        lua_pushboolean(L, COM_BitCheck(ent->client->ps.weapons, weapon));
+        return 1;
+    }
+    
+    lua_pushboolean(L, 0);
+    return 1;
+}
+
+// et.G_SetEntityFlag(entnum, flag, value) - Set/clear entity flag
+static int _et_G_SetEntityFlag(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    int flag = (int)luaL_checkinteger(L, 2);
+    int value = (int)luaL_checkinteger(L, 3);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    if (value) {
+        ent->flags |= flag;
+    } else {
+        ent->flags &= ~flag;
+    }
+    
+    return 0;
+}
+
+// et.G_GetEntityFlag(entnum, flag) - Get entity flag
+static int _et_G_GetEntityFlag(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    int flag = (int)luaL_checkinteger(L, 2);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    lua_pushboolean(L, ent->flags & flag);
+    return 1;
+}
+
+// et.G_ClientSetGodmode(clientnum, godmode) - Set godmode for client
+static int _et_G_ClientSetGodmode(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    int godmode = lua_toboolean(L, 2);
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientnum];
+    if (godmode) {
+        ent->flags |= FL_GODMODE;
+    } else {
+        ent->flags &= ~FL_GODMODE;
+    }
+    
+    return 0;
+}
+
+// et.G_ClientSetNoclip(clientnum, noclip) - Set noclip for client
+static int _et_G_ClientSetNoclip(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    int noclip = lua_toboolean(L, 2);
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[clientnum];
+    if (ent->client) {
+        ent->client->noclip = noclip ? qtrue : qfalse;
+    }
+    
+    return 0;
+}
+
+// et.DotProduct(vec1, vec2) - Dot product of two vectors
+static int _et_DotProduct(lua_State* L)
+{
+    vec3_t vec1, vec2;
+    
+    _et_getvec3(L, 1, vec1);
+    _et_getvec3(L, 2, vec2);
+    
+    lua_pushnumber(L, DotProduct(vec1, vec2));
+    return 1;
+}
+
+// et.CrossProduct(vec1, vec2) - Cross product of two vectors
+static int _et_CrossProduct(lua_State* L)
+{
+    vec3_t vec1, vec2, result;
+    
+    _et_getvec3(L, 1, vec1);
+    _et_getvec3(L, 2, vec2);
+    CrossProduct(vec1, vec2, result);
+    _et_pushvec3(L, result);
+    
+    return 1;
+}
+
+// et.VectorMA(vec, scale, dir) - vec + (scale * dir)
+static int _et_VectorMA(lua_State* L)
+{
+    vec3_t vec, dir, result;
+    float scale = (float)luaL_checknumber(L, 2);
+    
+    _et_getvec3(L, 1, vec);
+    _et_getvec3(L, 3, dir);
+    VectorMA(vec, scale, dir, result);
+    _et_pushvec3(L, result);
+    
+    return 1;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Lua library registration
 ///////////////////////////////////////////////////////////////////////////////
@@ -1632,6 +2142,14 @@ static const luaL_Reg etlib[] = {
     { "G_GetEntHealth",          _et_G_GetEntHealth          },
     { "G_GetEntInuse",           _et_G_GetEntInuse           },
     
+    // Entity finding/activation
+    { "G_Find",                  _et_G_Find                  },
+    { "G_FindByTargetname",      _et_G_FindByTargetname      },
+    { "G_Activate",              _et_G_Activate              },
+    { "G_UseEntity",             _et_G_UseEntity             },
+    { "G_SetEntityFlag",         _et_G_SetEntityFlag         },
+    { "G_GetEntityFlag",         _et_G_GetEntityFlag         },
+    
     // Vector math
     { "AngleVectors",            _et_AngleVectors            },
     { "VectorNormalize",         _et_VectorNormalize         },
@@ -1640,6 +2158,31 @@ static const luaL_Reg etlib[] = {
     { "VectorAdd",               _et_VectorAdd               },
     { "VectorScale",             _et_VectorScale             },
     { "Distance",                _et_Distance                },
+    { "DotProduct",              _et_DotProduct              },
+    { "CrossProduct",            _et_CrossProduct            },
+    { "VectorMA",                _et_VectorMA                },
+    
+    // Math functions
+    { "G_Random",                _et_G_Random                },
+    { "G_RandomInt",             _et_G_RandomInt             },
+    { "floor",                   _et_floor                   },
+    { "ceil",                    _et_ceil                    },
+    { "abs",                     _et_abs                     },
+    { "sin",                     _et_sin                     },
+    { "cos",                     _et_cos                     },
+    { "tan",                     _et_tan                     },
+    { "asin",                    _et_asin                    },
+    { "acos",                    _et_acos                    },
+    { "atan",                    _et_atan                    },
+    { "atan2",                   _et_atan2                   },
+    { "sqrt",                    _et_sqrt                    },
+    { "pow",                     _et_pow                     },
+    
+    // Gravity/Speed
+    { "G_GetGravity",            _et_G_GetGravity            },
+    { "G_SetGravity",            _et_G_SetGravity            },
+    { "G_GetSpeed",              _et_G_GetSpeed              },
+    { "G_SetSpeed",              _et_G_SetSpeed              },
     
     // Client info
     { "G_IsClientConnected",     _et_G_IsClientConnected     },
@@ -1651,6 +2194,16 @@ static const luaL_Reg etlib[] = {
     { "G_GetClientGuid",         _et_G_GetClientGuid         },
     { "G_IsClientSpectator",     _et_G_IsClientSpectator     },
     { "G_ClientIsBot",           _et_G_ClientIsBot           },
+    { "G_ClientKill",            _et_G_ClientKill            },
+    { "G_Gib",                   _et_G_Gib                   },
+    { "G_ClientSetGodmode",      _et_G_ClientSetGodmode      },
+    { "G_ClientSetNoclip",       _et_G_ClientSetNoclip       },
+    { "G_ClientHasWeapon",       _et_G_ClientHasWeapon       },
+    
+    // Ammo
+    { "G_SetAmmo",               _et_G_SetAmmo               },
+    { "G_GetAmmo",               _et_G_GetAmmo               },
+    { "G_SetClipAmmo",           _et_G_SetClipAmmo           },
     
     // Miscellaneous
     { "trap_Milliseconds",       _et_trap_Milliseconds       },
