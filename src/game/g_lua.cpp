@@ -505,6 +505,353 @@ static int _et_trap_UnlinkEntity(lua_State* L)
     return 0;
 }
 
+// et.G_Spawn() - Spawn a new entity
+static int _et_G_Spawn(lua_State* L)
+{
+    gentity_t* ent = G_Spawn();
+    if (ent) {
+        lua_pushinteger(L, ent - g_entities);
+    } else {
+        lua_pushnil(L);
+    }
+    return 1;
+}
+
+// et.G_AddEvent(entnum, event, eventparm) - Add an event to an entity
+static int _et_G_AddEvent(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    int event = (int)luaL_checkinteger(L, 2);
+    int eventparm = (int)luaL_checkinteger(L, 3);
+    G_AddEvent(g_entities + entnum, event, eventparm);
+    return 0;
+}
+
+// Helper function to get a vec3 from a Lua table
+static void _et_getvec3(lua_State* L, int idx, vec3_t vec)
+{
+    lua_pushnumber(L, 1);
+    lua_gettable(L, idx);
+    vec[0] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    lua_pushnumber(L, 2);
+    lua_gettable(L, idx);
+    vec[1] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    lua_pushnumber(L, 3);
+    lua_gettable(L, idx);
+    vec[2] = (float)lua_tonumber(L, -1);
+    lua_pop(L, 1);
+}
+
+// Helper function to push a vec3 to Lua as a table
+static void _et_pushvec3(lua_State* L, vec3_t vec)
+{
+    lua_newtable(L);
+    lua_pushnumber(L, vec[0]);
+    lua_rawseti(L, -2, 1);
+    lua_pushnumber(L, vec[1]);
+    lua_rawseti(L, -2, 2);
+    lua_pushnumber(L, vec[2]);
+    lua_rawseti(L, -2, 3);
+}
+
+// et.gentity_get(entnum, fieldname) - Get a field from an entity
+static int _et_gentity_get(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    const char* fieldname = luaL_checkstring(L, 2);
+    gentity_t* ent;
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    ent = &g_entities[entnum];
+    
+    if (!ent->inuse) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    // Handle entity fields
+    if (!Q_stricmp(fieldname, "classname")) {
+        lua_pushstring(L, ent->classname ? ent->classname : "");
+    } else if (!Q_stricmp(fieldname, "targetname")) {
+        lua_pushstring(L, ent->targetname ? ent->targetname : "");
+    } else if (!Q_stricmp(fieldname, "target")) {
+        lua_pushstring(L, ent->target ? ent->target : "");
+    } else if (!Q_stricmp(fieldname, "health")) {
+        lua_pushinteger(L, ent->health);
+    } else if (!Q_stricmp(fieldname, "damage")) {
+        lua_pushinteger(L, ent->damage);
+    } else if (!Q_stricmp(fieldname, "spawnflags")) {
+        lua_pushinteger(L, ent->spawnflags);
+    } else if (!Q_stricmp(fieldname, "clipmask")) {
+        lua_pushinteger(L, ent->clipmask);
+    } else if (!Q_stricmp(fieldname, "count")) {
+        lua_pushinteger(L, ent->count);
+    } else if (!Q_stricmp(fieldname, "flags")) {
+        lua_pushinteger(L, ent->flags);
+    } else if (!Q_stricmp(fieldname, "inuse")) {
+        lua_pushinteger(L, ent->inuse);
+    } else if (!Q_stricmp(fieldname, "origin")) {
+        _et_pushvec3(L, ent->r.currentOrigin);
+    } else if (!Q_stricmp(fieldname, "angles")) {
+        _et_pushvec3(L, ent->r.currentAngles);
+    } else if (!Q_stricmp(fieldname, "mins")) {
+        _et_pushvec3(L, ent->r.mins);
+    } else if (!Q_stricmp(fieldname, "maxs")) {
+        _et_pushvec3(L, ent->r.maxs);
+    } else if (!Q_stricmp(fieldname, "s.eType")) {
+        lua_pushinteger(L, ent->s.eType);
+    } else if (!Q_stricmp(fieldname, "s.eFlags")) {
+        lua_pushinteger(L, ent->s.eFlags);
+    } else if (!Q_stricmp(fieldname, "s.number")) {
+        lua_pushinteger(L, ent->s.number);
+    } else if (!Q_stricmp(fieldname, "s.clientNum")) {
+        lua_pushinteger(L, ent->s.clientNum);
+    } else if (!Q_stricmp(fieldname, "s.weapon")) {
+        lua_pushinteger(L, ent->s.weapon);
+    } else if (!Q_stricmp(fieldname, "s.teamNum")) {
+        lua_pushinteger(L, ent->s.teamNum);
+    } else if (!Q_stricmp(fieldname, "s.modelindex")) {
+        lua_pushinteger(L, ent->s.modelindex);
+    } else if (!Q_stricmp(fieldname, "s.modelindex2")) {
+        lua_pushinteger(L, ent->s.modelindex2);
+    } else if (ent->client) {
+        // Client fields
+        gclient_t* client = ent->client;
+        if (!Q_stricmp(fieldname, "pers.netname")) {
+            lua_pushstring(L, client->pers.netname);
+        } else if (!Q_stricmp(fieldname, "sess.sessionTeam")) {
+            lua_pushinteger(L, client->sess.sessionTeam);
+        } else if (!Q_stricmp(fieldname, "sess.playerType")) {
+            lua_pushinteger(L, client->sess.playerType);
+        } else if (!Q_stricmp(fieldname, "sess.playerWeapon")) {
+            lua_pushinteger(L, client->sess.playerWeapon);
+        } else if (!Q_stricmp(fieldname, "ps.stats")) {
+            // Return as table
+            int i, arrayindex = (int)luaL_optinteger(L, 3, 0);
+            if (arrayindex >= 0 && arrayindex < MAX_STATS) {
+                lua_pushinteger(L, client->ps.stats[arrayindex]);
+            } else {
+                lua_pushnil(L);
+            }
+        } else if (!Q_stricmp(fieldname, "ps.persistant")) {
+            int arrayindex = (int)luaL_optinteger(L, 3, 0);
+            if (arrayindex >= 0 && arrayindex < MAX_PERSISTANT) {
+                lua_pushinteger(L, client->ps.persistant[arrayindex]);
+            } else {
+                lua_pushnil(L);
+            }
+        } else if (!Q_stricmp(fieldname, "ps.weapon")) {
+            lua_pushinteger(L, client->ps.weapon);
+        } else if (!Q_stricmp(fieldname, "ps.pm_type")) {
+            lua_pushinteger(L, client->ps.pm_type);
+        } else if (!Q_stricmp(fieldname, "ps.pm_flags")) {
+            lua_pushinteger(L, client->ps.pm_flags);
+        } else if (!Q_stricmp(fieldname, "ps.origin")) {
+            _et_pushvec3(L, client->ps.origin);
+        } else if (!Q_stricmp(fieldname, "ps.velocity")) {
+            _et_pushvec3(L, client->ps.velocity);
+        } else if (!Q_stricmp(fieldname, "ps.viewangles")) {
+            _et_pushvec3(L, client->ps.viewangles);
+        } else {
+            lua_pushnil(L);
+        }
+    } else {
+        lua_pushnil(L);
+    }
+    
+    return 1;
+}
+
+// et.gentity_set(entnum, fieldname, value) - Set a field on an entity
+static int _et_gentity_set(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    const char* fieldname = luaL_checkstring(L, 2);
+    gentity_t* ent;
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        return 0;
+    }
+    
+    ent = &g_entities[entnum];
+    
+    if (!ent->inuse) {
+        return 0;
+    }
+    
+    // Handle entity fields
+    if (!Q_stricmp(fieldname, "health")) {
+        ent->health = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "damage")) {
+        ent->damage = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "spawnflags")) {
+        ent->spawnflags = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "clipmask")) {
+        ent->clipmask = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "count")) {
+        ent->count = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "flags")) {
+        ent->flags = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "origin")) {
+        _et_getvec3(L, 3, ent->r.currentOrigin);
+    } else if (!Q_stricmp(fieldname, "angles")) {
+        _et_getvec3(L, 3, ent->r.currentAngles);
+    } else if (!Q_stricmp(fieldname, "mins")) {
+        _et_getvec3(L, 3, ent->r.mins);
+    } else if (!Q_stricmp(fieldname, "maxs")) {
+        _et_getvec3(L, 3, ent->r.maxs);
+    } else if (!Q_stricmp(fieldname, "s.eType")) {
+        ent->s.eType = (entityType_t)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "s.eFlags")) {
+        ent->s.eFlags = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "s.weapon")) {
+        ent->s.weapon = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "s.teamNum")) {
+        ent->s.teamNum = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "s.modelindex")) {
+        ent->s.modelindex = (int)luaL_checkinteger(L, 3);
+    } else if (!Q_stricmp(fieldname, "s.modelindex2")) {
+        ent->s.modelindex2 = (int)luaL_checkinteger(L, 3);
+    } else if (ent->client) {
+        // Client fields
+        gclient_t* client = ent->client;
+        if (!Q_stricmp(fieldname, "ps.stats")) {
+            int arrayindex = (int)luaL_checkinteger(L, 3);
+            int value = (int)luaL_checkinteger(L, 4);
+            if (arrayindex >= 0 && arrayindex < MAX_STATS) {
+                client->ps.stats[arrayindex] = value;
+            }
+        } else if (!Q_stricmp(fieldname, "ps.persistant")) {
+            int arrayindex = (int)luaL_checkinteger(L, 3);
+            int value = (int)luaL_checkinteger(L, 4);
+            if (arrayindex >= 0 && arrayindex < MAX_PERSISTANT) {
+                client->ps.persistant[arrayindex] = value;
+            }
+        } else if (!Q_stricmp(fieldname, "ps.weapon")) {
+            client->ps.weapon = (int)luaL_checkinteger(L, 3);
+        } else if (!Q_stricmp(fieldname, "ps.pm_type")) {
+            client->ps.pm_type = (int)luaL_checkinteger(L, 3);
+        } else if (!Q_stricmp(fieldname, "ps.pm_flags")) {
+            client->ps.pm_flags = (int)luaL_checkinteger(L, 3);
+        } else if (!Q_stricmp(fieldname, "ps.origin")) {
+            _et_getvec3(L, 3, client->ps.origin);
+        } else if (!Q_stricmp(fieldname, "ps.velocity")) {
+            _et_getvec3(L, 3, client->ps.velocity);
+        } else if (!Q_stricmp(fieldname, "ps.viewangles")) {
+            _et_getvec3(L, 3, client->ps.viewangles);
+        }
+    }
+    
+    return 0;
+}
+
+// et.G_SetOrigin(entnum, origin) - Set entity origin
+static int _et_G_SetOrigin(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    vec3_t origin;
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        return 0;
+    }
+    
+    _et_getvec3(L, 2, origin);
+    G_SetOrigin(g_entities + entnum, origin);
+    return 0;
+}
+
+// et.G_SetAngles(entnum, angles) - Set entity angles
+static int _et_G_SetAngles(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    vec3_t angles;
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        return 0;
+    }
+    
+    _et_getvec3(L, 2, angles);
+    VectorCopy(angles, g_entities[entnum].r.currentAngles);
+    VectorCopy(angles, g_entities[entnum].s.angles);
+    return 0;
+}
+
+// et.G_GetOrigin(entnum) - Get entity origin
+static int _et_G_GetOrigin(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    gentity_t* ent;
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    ent = &g_entities[entnum];
+    _et_pushvec3(L, ent->r.currentOrigin);
+    return 1;
+}
+
+// et.G_GetAngles(entnum) - Get entity angles
+static int _et_G_GetAngles(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    gentity_t* ent;
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    ent = &g_entities[entnum];
+    _et_pushvec3(L, ent->r.currentAngles);
+    return 1;
+}
+
+// et.G_AddSkillPoints(entnum, skill, points) - Add skill points to a player
+static int _et_G_AddSkillPoints(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    int skill = (int)luaL_checkinteger(L, 2);
+    float points = (float)luaL_checknumber(L, 3);
+    gentity_t* ent;
+    
+    if (entnum < 0 || entnum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    ent = &g_entities[entnum];
+    if (ent->client) {
+        G_AddSkillPoints(ent, (skillType_t)skill, points);
+    }
+    return 0;
+}
+
+// et.G_LoseSkillPoints(entnum, skill, points) - Remove skill points from a player
+static int _et_G_LoseSkillPoints(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    int skill = (int)luaL_checkinteger(L, 2);
+    float points = (float)luaL_checknumber(L, 3);
+    gentity_t* ent;
+    
+    if (entnum < 0 || entnum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    ent = &g_entities[entnum];
+    if (ent->client) {
+        G_LoseSkillPoints(ent, (skillType_t)skill, points);
+    }
+    return 0;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Lua library registration
 ///////////////////////////////////////////////////////////////////////////////
@@ -567,11 +914,23 @@ static const luaL_Reg etlib[] = {
     { "G_Sound",                 _et_G_Sound                 },
     
     // Entities
+    { "G_Spawn",                 _et_G_Spawn                 },
     { "G_TempEntity",            _et_G_TempEntity            },
     { "G_FreeEntity",            _et_G_FreeEntity            },
     { "G_EntitiesFree",          _et_G_EntitiesFree          },
+    { "G_AddEvent",              _et_G_AddEvent              },
     { "trap_LinkEntity",         _et_trap_LinkEntity         },
     { "trap_UnlinkEntity",       _et_trap_UnlinkEntity       },
+    { "gentity_get",             _et_gentity_get             },
+    { "gentity_set",             _et_gentity_set             },
+    { "G_SetOrigin",             _et_G_SetOrigin             },
+    { "G_SetAngles",             _et_G_SetAngles             },
+    { "G_GetOrigin",             _et_G_GetOrigin             },
+    { "G_GetAngles",             _et_G_GetAngles             },
+    
+    // Skills
+    { "G_AddSkillPoints",        _et_G_AddSkillPoints        },
+    { "G_LoseSkillPoints",       _et_G_LoseSkillPoints       },
     
     // Miscellaneous
     { "trap_Milliseconds",       _et_trap_Milliseconds       },
@@ -1474,4 +1833,108 @@ void G_LuaHook_Print(char* text)
             }
         }
     }
+}
+
+// G_LuaHook_Obituary - Called when a player dies
+void G_LuaHook_Obituary(int victim, int killer, int meansOfDeath)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_Obituary")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, victim);
+            lua_pushinteger(vm->L, killer);
+            lua_pushinteger(vm->L, meansOfDeath);
+            // Call
+            if (!G_LuaCall(vm, "et_Obituary", 3, 0)) {
+                continue;
+            }
+        }
+    }
+}
+
+// G_LuaHook_Damage - Called when damage is dealt
+// Returns qtrue if damage should be blocked
+qboolean G_LuaHook_Damage(int target, int attacker, int damage, int dflags, int mod)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_Damage")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, target);
+            lua_pushinteger(vm->L, attacker);
+            lua_pushinteger(vm->L, damage);
+            lua_pushinteger(vm->L, dflags);
+            lua_pushinteger(vm->L, mod);
+            // Call
+            if (!G_LuaCall(vm, "et_Damage", 5, 1)) {
+                continue;
+            }
+            // Return values - return 1 to block damage
+            if (lua_isnumber(vm->L, -1)) {
+                if (lua_tointeger(vm->L, -1) == 1) {
+                    lua_pop(vm->L, 1);
+                    return qtrue;
+                }
+            }
+            lua_pop(vm->L, 1);
+        }
+    }
+    return qfalse;
+}
+
+// G_LuaHook_ChatMessage - Called when a player chats
+// Returns qtrue if message should be blocked
+qboolean G_LuaHook_ChatMessage(int clientNum, int mode, int chatType, char* message)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_ChatMessage")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, clientNum);
+            lua_pushinteger(vm->L, mode);
+            lua_pushinteger(vm->L, chatType);
+            lua_pushstring(vm->L, message);
+            // Call
+            if (!G_LuaCall(vm, "et_ChatMessage", 4, 1)) {
+                continue;
+            }
+            // Return values - return 1 to block message
+            if (lua_isnumber(vm->L, -1)) {
+                if (lua_tointeger(vm->L, -1) == 1) {
+                    lua_pop(vm->L, 1);
+                    return qtrue;
+                }
+            }
+            lua_pop(vm->L, 1);
+        }
+    }
+    return qfalse;
 }

@@ -108,6 +108,15 @@ qboolean G_LuaHook_ConsoleCommand(char* command);
 // Called when text is printed
 void G_LuaHook_Print(char* text);
 
+// Called when a player dies (obituary)
+void G_LuaHook_Obituary(int victim, int killer, int meansOfDeath);
+
+// Called when damage is dealt
+qboolean G_LuaHook_Damage(int target, int attacker, int damage, int dflags, int mod);
+
+// Called when a player chats
+qboolean G_LuaHook_ChatMessage(int clientNum, int mode, int chatType, char* message);
+
 ///////////////////////////////////////////////////////////////////////////////
 
 #endif // GAME_G_LUA_H
