@@ -8,10 +8,12 @@ typedef struct teamgame_s
 } teamgame_t;
 
 teamgame_t teamgame;
+static int numobjectives = 0; // TTimo - number of objectives in the map
 
 void Team_InitGame(void)
 {
 	memset(&teamgame, 0, sizeof teamgame);
+	numobjectives = 0;
 }
 
 int OtherTeam(int team) {
@@ -1054,7 +1056,6 @@ screen.
 DEFAULT_AXIS - This spawn region belongs to the Axis at the start of the map
 DEFAULT_ALLIES - This spawn region belongs to the Alles at the start of the map
 */
-static int numobjectives = 0; // TTimo
 
 // swaps the team
 void team_wolf_objective_use( gentity_t *self, gentity_t *other, gentity_t *activator ) {

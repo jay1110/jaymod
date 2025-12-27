@@ -2035,6 +2035,9 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	G_InitWorldSession();
 
+	// Initialize team data (reset numobjectives to prevent crash on map change)
+	Team_InitGame();
+
 	// DHM - Nerve :: Clear out spawn target config strings
 	trap_GetConfigstring( CS_MULTI_INFO, cs, sizeof(cs) );
 	Info_SetValueForKey( cs, "numspawntargets", "0" );
