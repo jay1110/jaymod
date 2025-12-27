@@ -3699,6 +3699,8 @@ void ClientCommand( int clientNum ) {
 		G_ShoutcasterLogout(ent);
     } else if (!Q_stricmp(cmd, "testbox")) {
         CP(va("chat \"%.0f %.0f %.0f\"", ent->client->ps.maxs[0], ent->client->ps.maxs[1], ent->client->ps.maxs[2]));
+	} else if (!Q_stricmp(cmd, "lua_status")) {
+		G_LuaStatus(ent);
 	} else {
 		trap_SendServerCommand( clientNum, va("print \"unknown cmd[lof] %s\n\"", cmd ) );
 	}
