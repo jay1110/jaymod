@@ -4717,27 +4717,12 @@ qboolean G_LuaRunIsolated(const char* modName)
     // Check ACL if lua_allowedModules is set
     if (allowedModules[0] != '\0') {
         char signatureUpper[41];
-        char* token;
-        char allowedCopy[MAX_CVAR_VALUE_STRING];
-        qboolean found = qfalse;
         
         Q_strncpyz(signatureUpper, signature, sizeof(signatureUpper));
         Q_strupr(signatureUpper);
         
-        // Make a copy to tokenize (since strtok modifies the string)
-        Q_strncpyz(allowedCopy, allowedModules, sizeof(allowedCopy));
-        
-        // Check each token (space, comma, or semicolon separated)
-        token = strtok(allowedCopy, " ,;");
-        while (token != NULL) {
-            if (Q_stricmp(token, signatureUpper) == 0) {
-                found = qtrue;
-                break;
-            }
-            token = strtok(NULL, " ,;");
-        }
-        
-        if (!found) {
+        // ETLegacy uses simple strstr substring matching
+        if (!strstr(allowedModules, signatureUpper)) {
             // Module signature not in allowed list
             G_Printf("Lua API: Lua module [%s] [%s] disallowed by ACL\n", filename, signature);
             free(code);
