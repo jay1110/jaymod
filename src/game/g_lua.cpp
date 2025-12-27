@@ -713,6 +713,27 @@ static int _et_gentity_get(lua_State* L)
             } else {
                 lua_pushnil(L);
             }
+        } else if (!Q_stricmp(fieldname, "ps.powerups")) {
+            int arrayindex = (int)luaL_optinteger(L, 3, 0);
+            if (arrayindex >= 0 && arrayindex < MAX_POWERUPS) {
+                lua_pushinteger(L, client->ps.powerups[arrayindex]);
+            } else {
+                lua_pushnil(L);
+            }
+        } else if (!Q_stricmp(fieldname, "ps.ammo")) {
+            int arrayindex = (int)luaL_optinteger(L, 3, 0);
+            if (arrayindex >= 0 && arrayindex < MAX_WEAPONS) {
+                lua_pushinteger(L, client->ps.ammo[arrayindex]);
+            } else {
+                lua_pushnil(L);
+            }
+        } else if (!Q_stricmp(fieldname, "ps.ammoclip")) {
+            int arrayindex = (int)luaL_optinteger(L, 3, 0);
+            if (arrayindex >= 0 && arrayindex < MAX_WEAPONS) {
+                lua_pushinteger(L, client->ps.ammoclip[arrayindex]);
+            } else {
+                lua_pushnil(L);
+            }
         } else if (!Q_stricmp(fieldname, "ps.weapon")) {
             lua_pushinteger(L, client->ps.weapon);
         } else if (!Q_stricmp(fieldname, "ps.pm_type")) {
@@ -799,6 +820,24 @@ static int _et_gentity_set(lua_State* L)
             int value = (int)luaL_checkinteger(L, 4);
             if (arrayindex >= 0 && arrayindex < MAX_PERSISTANT) {
                 client->ps.persistant[arrayindex] = value;
+            }
+        } else if (!Q_stricmp(fieldname, "ps.powerups")) {
+            int arrayindex = (int)luaL_checkinteger(L, 3);
+            int value = (int)luaL_checkinteger(L, 4);
+            if (arrayindex >= 0 && arrayindex < MAX_POWERUPS) {
+                client->ps.powerups[arrayindex] = value;
+            }
+        } else if (!Q_stricmp(fieldname, "ps.ammo")) {
+            int arrayindex = (int)luaL_checkinteger(L, 3);
+            int value = (int)luaL_checkinteger(L, 4);
+            if (arrayindex >= 0 && arrayindex < MAX_WEAPONS) {
+                client->ps.ammo[arrayindex] = value;
+            }
+        } else if (!Q_stricmp(fieldname, "ps.ammoclip")) {
+            int arrayindex = (int)luaL_checkinteger(L, 3);
+            int value = (int)luaL_checkinteger(L, 4);
+            if (arrayindex >= 0 && arrayindex < MAX_WEAPONS) {
+                client->ps.ammoclip[arrayindex] = value;
             }
         } else if (!Q_stricmp(fieldname, "ps.weapon")) {
             client->ps.weapon = (int)luaL_checkinteger(L, 3);
