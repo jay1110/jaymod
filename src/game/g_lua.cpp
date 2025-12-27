@@ -379,6 +379,32 @@ static int _et_G_Sound(lua_State* L)
     return 0;
 }
 
+// et.G_ClientSound(clientnum, soundindex) - Play a sound to client's team
+static int _et_G_ClientSound(lua_State* L)
+{
+    int clientnum = (int)luaL_checkinteger(L, 1);
+    int soundindex = (int)luaL_checkinteger(L, 2);
+    
+    if (clientnum < 0 || clientnum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    gentity_t* ent = g_entities + clientnum;
+    if (!ent->client) {
+        return 0;
+    }
+    
+    // Play sound to the player's team
+    int team = ent->client->sess.sessionTeam;
+    gentity_t* te = G_TempEntity(ent->r.currentOrigin, EV_GLOBAL_CLIENT_SOUND);
+    te->s.teamNum = clientnum;
+    te->s.eventParm = soundindex;
+    te->r.singleClient = team;
+    te->r.svFlags = SVF_BROADCAST;
+    
+    return 0;
+}
+
 // Filesystem functions
 
 // et.trap_FS_FOpenFile(filename, mode) - Open a file
@@ -478,6 +504,26 @@ static int _et_G_FreeEntity(lua_State* L)
     return 0;
 }
 
+// et.G_DeleteEntity(params) - Delete entities matching mapscript parameters
+// Similar to G_ScriptAction_Delete
+static int _et_G_DeleteEntity(lua_State* L)
+{
+    const char* params = luaL_checkstring(L, 1);
+    gentity_t* ent = NULL;
+    int deleted = 0;
+    
+    // Find entities by targetname
+    while ((ent = G_Find(ent, FOFS(targetname), params)) != NULL) {
+        if (ent->inuse && !(ent->r.svFlags & SVF_NOCLIENT)) {
+            G_FreeEntity(ent);
+            deleted++;
+        }
+    }
+    
+    lua_pushinteger(L, deleted);
+    return 1;
+}
+
 // et.G_EntitiesFree() - Count free entities
 static int _et_G_EntitiesFree(lua_State* L)
 {
@@ -505,6 +551,25 @@ static int _et_trap_UnlinkEntity(lua_State* L)
 {
     int entnum = (int)luaL_checkinteger(L, 1);
     trap_UnlinkEntity(g_entities + entnum);
+    return 0;
+}
+
+// et.G_SetEntState(entnum, state) - Set entity state
+static int _et_G_SetEntState(lua_State* L)
+{
+    int entnum = (int)luaL_checkinteger(L, 1);
+    entState_t state = (entState_t)luaL_checkinteger(L, 2);
+    
+    if (entnum < 0 || entnum >= MAX_GENTITIES) {
+        return 0;
+    }
+    
+    gentity_t* ent = &g_entities[entnum];
+    if (!ent->inuse) {
+        return 0;
+    }
+    
+    G_SetEntState(ent, state);
     return 0;
 }
 
@@ -1166,6 +1231,13 @@ static int _et_G_ShaderRemap(lua_State* L)
 static int _et_G_ShaderRemapFlush(lua_State* L)
 {
     trap_SetConfigstring(CS_SHADERSTATE, BuildShaderStateConfig());
+    return 0;
+}
+
+// et.G_ResetRemappedShaders() - Reset all remapped shaders
+static int _et_G_ResetRemappedShaders(lua_State* L)
+{
+    G_ResetRemappedShaders();
     return 0;
 }
 
@@ -3567,12 +3639,15 @@ static const luaL_Reg etlib[] = {
     { "G_ModelIndex",            _et_G_ModelIndex            },
     { "G_globalSound",           _et_G_globalSound           },
     { "G_Sound",                 _et_G_Sound                 },
+    { "G_ClientSound",           _et_G_ClientSound           },
     
     // Entities
     { "G_Spawn",                 _et_G_Spawn                 },
     { "G_TempEntity",            _et_G_TempEntity            },
     { "G_FreeEntity",            _et_G_FreeEntity            },
+    { "G_DeleteEntity",          _et_G_DeleteEntity          },
     { "G_EntitiesFree",          _et_G_EntitiesFree          },
+    { "G_SetEntState",           _et_G_SetEntState           },
     { "G_AddEvent",              _et_G_AddEvent              },
     { "trap_LinkEntity",         _et_trap_LinkEntity         },
     { "trap_UnlinkEntity",       _et_trap_UnlinkEntity       },
@@ -3604,6 +3679,7 @@ static const luaL_Reg etlib[] = {
     // Shader
     { "G_ShaderRemap",           _et_G_ShaderRemap           },
     { "G_ShaderRemapFlush",      _et_G_ShaderRemapFlush      },
+    { "G_ResetRemappedShaders",  _et_G_ResetRemappedShaders  },
     
     // Level/Time
     { "GetLevelTime",            _et_GetLevelTime            },
@@ -4016,6 +4092,11 @@ static void G_LuaRegisterConstants(lua_State* L)
     lua_regconstinteger(L, STAT_XP);
     lua_regconstinteger(L, STAT_ANTIWARP_DELAY);
     lua_regconstinteger(L, STAT_KEYS);
+    
+    // Entity state constants (for G_SetEntState)
+    lua_regconstinteger(L, STATE_DEFAULT);
+    lua_regconstinteger(L, STATE_INVISIBLE);
+    lua_regconstinteger(L, STATE_UNDERCONSTRUCTION);
     
     // Pop the et table
     lua_pop(L, 1);
@@ -4931,4 +5012,168 @@ qboolean G_LuaHook_SetPlayerSkill(int clientNum, int skill, int level)
         }
     }
     return qfalse;
+}
+
+// G_LuaHook_UpgradeSkill - Called when a player gets a skill upgrade
+// Returns qtrue if skill upgrade should be blocked
+qboolean G_LuaHook_UpgradeSkill(int clientNum, int skill)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_UpgradeSkill")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, clientNum);
+            lua_pushinteger(vm->L, skill);
+            // Call
+            if (!G_LuaCall(vm, "et_UpgradeSkill", 2, 1)) {
+                continue;
+            }
+            // Return values - return -1 to block skill upgrade
+            if (lua_isnumber(vm->L, -1)) {
+                if (lua_tointeger(vm->L, -1) == -1) {
+                    lua_pop(vm->L, 1);
+                    return qtrue;
+                }
+            }
+            lua_pop(vm->L, 1);
+        }
+    }
+    return qfalse;
+}
+
+// G_LuaHook_FixedMGFire - Called when a fixed MG42 is fired
+// Returns qtrue if firing should be blocked
+qboolean G_LuaHook_FixedMGFire(int clientNum)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_FixedMGFire")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, clientNum);
+            // Call
+            if (!G_LuaCall(vm, "et_FixedMGFire", 1, 1)) {
+                continue;
+            }
+            // Return values - return 1 to block firing
+            if (lua_isnumber(vm->L, -1)) {
+                if (lua_tointeger(vm->L, -1) == 1) {
+                    lua_pop(vm->L, 1);
+                    return qtrue;
+                }
+            }
+            lua_pop(vm->L, 1);
+        }
+    }
+    return qfalse;
+}
+
+// G_LuaHook_MountedMGFire - Called when a mounted MG42 is fired
+// Returns qtrue if firing should be blocked
+qboolean G_LuaHook_MountedMGFire(int clientNum)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_MountedMGFire")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, clientNum);
+            // Call
+            if (!G_LuaCall(vm, "et_MountedMGFire", 1, 1)) {
+                continue;
+            }
+            // Return values - return 1 to block firing
+            if (lua_isnumber(vm->L, -1)) {
+                if (lua_tointeger(vm->L, -1) == 1) {
+                    lua_pop(vm->L, 1);
+                    return qtrue;
+                }
+            }
+            lua_pop(vm->L, 1);
+        }
+    }
+    return qfalse;
+}
+
+// G_LuaHook_AAGunFire - Called when an anti-aircraft gun is fired
+// Returns qtrue if firing should be blocked
+qboolean G_LuaHook_AAGunFire(int clientNum)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_AAGunFire")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, clientNum);
+            // Call
+            if (!G_LuaCall(vm, "et_AAGunFire", 1, 1)) {
+                continue;
+            }
+            // Return values - return 1 to block firing
+            if (lua_isnumber(vm->L, -1)) {
+                if (lua_tointeger(vm->L, -1) == 1) {
+                    lua_pop(vm->L, 1);
+                    return qtrue;
+                }
+            }
+            lua_pop(vm->L, 1);
+        }
+    }
+    return qfalse;
+}
+
+// G_LuaHook_SpawnEntitiesFromString - Called when entities are spawned from map string
+void G_LuaHook_SpawnEntitiesFromString(void)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_SpawnEntitiesFromString")) {
+                continue;
+            }
+            // Call with no arguments
+            if (!G_LuaCall(vm, "et_SpawnEntitiesFromString", 0, 0)) {
+                continue;
+            }
+        }
+    }
 }

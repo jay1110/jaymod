@@ -126,6 +126,21 @@ void G_LuaHook_Revive(int clientNum, int reviverNum);
 // Called when a player's skill is set
 qboolean G_LuaHook_SetPlayerSkill(int clientNum, int skill, int level);
 
+// Called when a player gets a skill upgrade
+qboolean G_LuaHook_UpgradeSkill(int clientNum, int skill);
+
+// Called when a fixed MG42 is fired
+qboolean G_LuaHook_FixedMGFire(int clientNum);
+
+// Called when a mounted MG42 is fired
+qboolean G_LuaHook_MountedMGFire(int clientNum);
+
+// Called when an anti-aircraft gun is fired
+qboolean G_LuaHook_AAGunFire(int clientNum);
+
+// Called when entities are spawned from map string
+void G_LuaHook_SpawnEntitiesFromString(void);
+
 ///////////////////////////////////////////////////////////////////////////////
 
 #endif // GAME_G_LUA_H
