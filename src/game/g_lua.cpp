@@ -852,6 +852,304 @@ static int _et_G_LoseSkillPoints(lua_State* L)
     return 0;
 }
 
+// et.trap_Trace(start, mins, maxs, end, entNum, mask) - Perform a trace
+static int _et_trap_Trace(lua_State* L)
+{
+    trace_t tr;
+    vec3_t start, end, mins, maxs;
+    int entNum, mask;
+    
+    _et_getvec3(L, 1, start);
+    
+    if (!lua_isnil(L, 2)) {
+        _et_getvec3(L, 2, mins);
+    } else {
+        VectorClear(mins);
+    }
+    
+    if (!lua_isnil(L, 3)) {
+        _et_getvec3(L, 3, maxs);
+    } else {
+        VectorClear(maxs);
+    }
+    
+    _et_getvec3(L, 4, end);
+    entNum = (int)luaL_checkinteger(L, 5);
+    mask = (int)luaL_checkinteger(L, 6);
+    
+    trap_Trace(&tr, start, mins, maxs, end, entNum, mask);
+    
+    // Return trace results as table
+    lua_newtable(L);
+    
+    lua_pushstring(L, "allsolid");
+    lua_pushboolean(L, tr.allsolid);
+    lua_settable(L, -3);
+    
+    lua_pushstring(L, "startsolid");
+    lua_pushboolean(L, tr.startsolid);
+    lua_settable(L, -3);
+    
+    lua_pushstring(L, "fraction");
+    lua_pushnumber(L, tr.fraction);
+    lua_settable(L, -3);
+    
+    lua_pushstring(L, "endpos");
+    _et_pushvec3(L, tr.endpos);
+    lua_settable(L, -3);
+    
+    lua_pushstring(L, "surfaceFlags");
+    lua_pushinteger(L, tr.surfaceFlags);
+    lua_settable(L, -3);
+    
+    lua_pushstring(L, "contents");
+    lua_pushinteger(L, tr.contents);
+    lua_settable(L, -3);
+    
+    lua_pushstring(L, "entityNum");
+    lua_pushinteger(L, tr.entityNum);
+    lua_settable(L, -3);
+    
+    return 1;
+}
+
+// et.trap_FS_GetFileList(path, extension) - Get list of files
+static int _et_trap_FS_GetFileList(lua_State* L)
+{
+    char buff[16384];
+    char* s;
+    int numfiles, i;
+    const char* path = luaL_checkstring(L, 1);
+    const char* ext = luaL_checkstring(L, 2);
+    
+    numfiles = trap_FS_GetFileList(path, ext, buff, sizeof(buff));
+    
+    lua_newtable(L);
+    s = buff;
+    for (i = 0; i < numfiles; i++) {
+        lua_pushinteger(L, i + 1);
+        lua_pushstring(L, s);
+        lua_settable(L, -3);
+        s += strlen(s) + 1;
+    }
+    
+    return 1;
+}
+
+// et.G_XP_Set(clientNum, xp, skill, add) - Set or add XP for a player
+static int _et_G_XP_Set(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    float xp = (float)luaL_checknumber(L, 2);
+    int skill = (int)luaL_checkinteger(L, 3);
+    int add = (int)luaL_optinteger(L, 4, 0);
+    gentity_t* ent;
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    ent = &g_entities[clientNum];
+    if (!ent->client) {
+        return 0;
+    }
+    
+    if (skill < 0 || skill >= SK_NUM_SKILLS) {
+        return 0;
+    }
+    
+    if (add) {
+        ent->client->sess.skillpoints[skill] += xp;
+    } else {
+        ent->client->sess.skillpoints[skill] = xp;
+    }
+    
+    return 0;
+}
+
+// et.G_ResetXP(clientNum) - Reset XP for a player
+static int _et_G_ResetXP(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    gentity_t* ent;
+    int i;
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    ent = &g_entities[clientNum];
+    if (!ent->client) {
+        return 0;
+    }
+    
+    for (i = 0; i < SK_NUM_SKILLS; i++) {
+        ent->client->sess.skillpoints[i] = 0;
+        ent->client->sess.skill[i] = 0;
+    }
+    
+    return 0;
+}
+
+// et.GetPlayerXP(clientNum, skill) - Get player XP for a skill
+static int _et_GetPlayerXP(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int skill = (int)luaL_checkinteger(L, 2);
+    gentity_t* ent;
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    ent = &g_entities[clientNum];
+    if (!ent->client) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    if (skill < 0 || skill >= SK_NUM_SKILLS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushnumber(L, ent->client->sess.skillpoints[skill]);
+    return 1;
+}
+
+// et.GetPlayerSkill(clientNum, skill) - Get player skill level
+static int _et_GetPlayerSkill(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int skill = (int)luaL_checkinteger(L, 2);
+    gentity_t* ent;
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    ent = &g_entities[clientNum];
+    if (!ent->client) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    if (skill < 0 || skill >= SK_NUM_SKILLS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, ent->client->sess.skill[skill]);
+    return 1;
+}
+
+// et.AddWeaponToPlayer(clientNum, weapon, ammo, ammoclip, setcurrent) - Add weapon to player
+static int _et_AddWeaponToPlayer(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int weapon = (int)luaL_checkinteger(L, 2);
+    int ammo = (int)luaL_optinteger(L, 3, 0);
+    int ammoclip = (int)luaL_optinteger(L, 4, 0);
+    int setcurrent = (int)luaL_optinteger(L, 5, 1);
+    gentity_t* ent;
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    ent = &g_entities[clientNum];
+    if (!ent->client) {
+        return 0;
+    }
+    
+    if (weapon < 0 || weapon >= WP_NUM_WEAPONS) {
+        return 0;
+    }
+    
+    COM_BitSet(ent->client->ps.weapons, weapon);
+    ent->client->ps.ammoclip[weapon] = ammoclip;
+    ent->client->ps.ammo[weapon] = ammo;
+    
+    if (setcurrent) {
+        ent->client->ps.weapon = weapon;
+    }
+    
+    return 0;
+}
+
+// et.RemoveWeaponFromPlayer(clientNum, weapon) - Remove weapon from player
+static int _et_RemoveWeaponFromPlayer(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    int weapon = (int)luaL_checkinteger(L, 2);
+    gentity_t* ent;
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        return 0;
+    }
+    
+    ent = &g_entities[clientNum];
+    if (!ent->client) {
+        return 0;
+    }
+    
+    if (weapon < 0 || weapon >= WP_NUM_WEAPONS) {
+        return 0;
+    }
+    
+    COM_BitClear(ent->client->ps.weapons, weapon);
+    ent->client->ps.ammoclip[weapon] = 0;
+    ent->client->ps.ammo[weapon] = 0;
+    
+    return 0;
+}
+
+// et.GetCurrentWeapon(clientNum) - Get player's current weapon
+static int _et_GetCurrentWeapon(lua_State* L)
+{
+    int clientNum = (int)luaL_checkinteger(L, 1);
+    gentity_t* ent;
+    
+    if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    ent = &g_entities[clientNum];
+    if (!ent->client) {
+        lua_pushnil(L);
+        return 1;
+    }
+    
+    lua_pushinteger(L, ent->client->ps.weapon);
+    return 1;
+}
+
+// et.trap_PointContents(point, passent) - Get contents at a point
+static int _et_trap_PointContents(lua_State* L)
+{
+    vec3_t point;
+    int passent = (int)luaL_optinteger(L, 2, -1);
+    
+    _et_getvec3(L, 1, point);
+    lua_pushinteger(L, trap_PointContents(point, passent));
+    return 1;
+}
+
+// et.InPVS(point1, point2) - Check if two points are in PVS of each other
+static int _et_InPVS(lua_State* L)
+{
+    vec3_t point1, point2;
+    
+    _et_getvec3(L, 1, point1);
+    _et_getvec3(L, 2, point2);
+    
+    lua_pushboolean(L, trap_InPVS(point1, point2));
+    return 1;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Lua library registration
 ///////////////////////////////////////////////////////////////////////////////
@@ -906,6 +1204,7 @@ static const luaL_Reg etlib[] = {
     { "trap_FS_Write",           _et_trap_FS_Write           },
     { "trap_FS_FCloseFile",      _et_trap_FS_FCloseFile      },
     { "trap_FS_Rename",          _et_trap_FS_Rename          },
+    { "trap_FS_GetFileList",     _et_trap_FS_GetFileList     },
     
     // Sound
     { "G_SoundIndex",            _et_G_SoundIndex            },
@@ -928,9 +1227,23 @@ static const luaL_Reg etlib[] = {
     { "G_GetOrigin",             _et_G_GetOrigin             },
     { "G_GetAngles",             _et_G_GetAngles             },
     
-    // Skills
+    // Skills and XP
     { "G_AddSkillPoints",        _et_G_AddSkillPoints        },
     { "G_LoseSkillPoints",       _et_G_LoseSkillPoints       },
+    { "G_XP_Set",                _et_G_XP_Set                },
+    { "G_ResetXP",               _et_G_ResetXP               },
+    { "GetPlayerXP",             _et_GetPlayerXP             },
+    { "GetPlayerSkill",          _et_GetPlayerSkill          },
+    
+    // Weapons
+    { "AddWeaponToPlayer",       _et_AddWeaponToPlayer       },
+    { "RemoveWeaponFromPlayer",  _et_RemoveWeaponFromPlayer  },
+    { "GetCurrentWeapon",        _et_GetCurrentWeapon        },
+    
+    // Tracing
+    { "trap_Trace",              _et_trap_Trace              },
+    { "trap_PointContents",      _et_trap_PointContents      },
+    { "InPVS",                   _et_InPVS                   },
     
     // Miscellaneous
     { "trap_Milliseconds",       _et_trap_Milliseconds       },
@@ -1927,6 +2240,105 @@ qboolean G_LuaHook_ChatMessage(int clientNum, int mode, int chatType, char* mess
                 continue;
             }
             // Return values - return 1 to block message
+            if (lua_isnumber(vm->L, -1)) {
+                if (lua_tointeger(vm->L, -1) == 1) {
+                    lua_pop(vm->L, 1);
+                    return qtrue;
+                }
+            }
+            lua_pop(vm->L, 1);
+        }
+    }
+    return qfalse;
+}
+
+// G_LuaHook_WeaponFire - Called when a weapon is fired
+// Returns qtrue if firing should be blocked
+qboolean G_LuaHook_WeaponFire(int clientNum, int weapon)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_WeaponFire")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, clientNum);
+            lua_pushinteger(vm->L, weapon);
+            // Call
+            if (!G_LuaCall(vm, "et_WeaponFire", 2, 1)) {
+                continue;
+            }
+            // Return values - return 1 to block firing
+            if (lua_isnumber(vm->L, -1)) {
+                if (lua_tointeger(vm->L, -1) == 1) {
+                    lua_pop(vm->L, 1);
+                    return qtrue;
+                }
+            }
+            lua_pop(vm->L, 1);
+        }
+    }
+    return qfalse;
+}
+
+// G_LuaHook_Revive - Called when a player is revived
+void G_LuaHook_Revive(int clientNum, int reviverNum)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_Revive")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, clientNum);
+            lua_pushinteger(vm->L, reviverNum);
+            // Call
+            if (!G_LuaCall(vm, "et_Revive", 2, 0)) {
+                continue;
+            }
+        }
+    }
+}
+
+// G_LuaHook_SetPlayerSkill - Called when a player's skill is set
+// Returns qtrue if skill change should be blocked
+qboolean G_LuaHook_SetPlayerSkill(int clientNum, int skill, int level)
+{
+    int i;
+    lua_vm_t* vm;
+
+    for (i = 0; i < LUA_NUM_VM; i++) {
+        vm = lVM[i];
+        if (vm) {
+            if (vm->id < 0) {
+                continue;
+            }
+            if (!G_LuaGetNamedFunction(vm, "et_SetPlayerSkill")) {
+                continue;
+            }
+            // Arguments
+            lua_pushinteger(vm->L, clientNum);
+            lua_pushinteger(vm->L, skill);
+            lua_pushinteger(vm->L, level);
+            // Call
+            if (!G_LuaCall(vm, "et_SetPlayerSkill", 3, 1)) {
+                continue;
+            }
+            // Return values - return 1 to block skill change
             if (lua_isnumber(vm->L, -1)) {
                 if (lua_tointeger(vm->L, -1) == 1) {
                     lua_pop(vm->L, 1);

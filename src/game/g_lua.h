@@ -117,6 +117,15 @@ qboolean G_LuaHook_Damage(int target, int attacker, int damage, int dflags, int 
 // Called when a player chats
 qboolean G_LuaHook_ChatMessage(int clientNum, int mode, int chatType, char* message);
 
+// Called when a weapon is fired
+qboolean G_LuaHook_WeaponFire(int clientNum, int weapon);
+
+// Called when a player is revived
+void G_LuaHook_Revive(int clientNum, int reviverNum);
+
+// Called when a player's skill is set
+qboolean G_LuaHook_SetPlayerSkill(int clientNum, int skill, int level);
+
 ///////////////////////////////////////////////////////////////////////////////
 
 #endif // GAME_G_LUA_H
