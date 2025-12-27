@@ -4000,6 +4000,15 @@ static void G_LuaRegisterConstants(lua_State* L)
     lua_regconstinteger(L, MOD_SWITCHTEAM);
     lua_regconstinteger(L, MOD_NUM_MODS);
     
+    // Additional MOD constants
+    lua_regconstinteger(L, MOD_KICKED);
+    lua_regconstinteger(L, MOD_MAPMORTAR);
+    lua_regconstinteger(L, MOD_MAPMORTAR_SPLASH);
+    lua_regconstinteger(L, MOD_TARGET_LASER);
+    lua_regconstinteger(L, MOD_CRUSH_CONSTRUCTION);
+    lua_regconstinteger(L, MOD_CRUSH_CONSTRUCTIONDEATH);
+    lua_regconstinteger(L, MOD_CRUSH_CONSTRUCTIONDEATH_NOATTACKER);
+    
     // Say mode constants
     lua_regconstinteger(L, SAY_ALL);
     lua_regconstinteger(L, SAY_TEAM);
@@ -4023,6 +4032,19 @@ static void G_LuaRegisterConstants(lua_State* L)
     lua_regconstinteger(L, MAX_MODELS);
     lua_regconstinteger(L, MAX_SOUNDS);
     
+    // Additional Max constants
+    lua_regconstinteger(L, MAX_CS_SKINS);
+    lua_regconstinteger(L, MAX_CSSTRINGS);
+    lua_regconstinteger(L, MAX_CS_SHADERS);
+    lua_regconstinteger(L, MAX_MULTI_SPAWNTARGETS);
+    lua_regconstinteger(L, MAX_DLIGHT_CONFIGSTRINGS);
+    lua_regconstinteger(L, MAX_SPLINE_CONFIGSTRINGS);
+    lua_regconstinteger(L, MAX_OID_TRIGGERS);
+    lua_regconstinteger(L, MAX_CHARACTERS);
+    lua_regconstinteger(L, MAX_TAGCONNECTS);
+    lua_regconstinteger(L, MAX_FIRETEAMS);
+    lua_regconstinteger(L, MAX_MOTDLINES);
+    
     // Configstring constants
     lua_regconstinteger(L, CS_SERVERINFO);
     lua_regconstinteger(L, CS_SYSTEMINFO);
@@ -4038,6 +4060,50 @@ static void G_LuaRegisterConstants(lua_State* L)
     lua_regconstinteger(L, CS_LEVEL_START_TIME);
     lua_regconstinteger(L, CS_INTERMISSION);
     lua_regconstinteger(L, CS_PLAYERS);
+    
+    // Additional Configstring constants
+    lua_regconstinteger(L, CS_MULTI_INFO);
+    lua_regconstinteger(L, CS_MULTI_MAPWINNER);
+    lua_regconstinteger(L, CS_MULTI_OBJECTIVE);
+    lua_regconstinteger(L, CS_SCREENFADE);
+    lua_regconstinteger(L, CS_FOGVARS);
+    lua_regconstinteger(L, CS_SKYBOXORG);
+    lua_regconstinteger(L, CS_TARGETEFFECT);
+    lua_regconstinteger(L, CS_WOLFINFO);
+    lua_regconstinteger(L, CS_FIRSTBLOOD);
+    lua_regconstinteger(L, CS_ROUNDSCORES1);
+    lua_regconstinteger(L, CS_ROUNDSCORES2);
+    lua_regconstinteger(L, CS_MAIN_AXIS_OBJECTIVE);
+    lua_regconstinteger(L, CS_MAIN_ALLIES_OBJECTIVE);
+    lua_regconstinteger(L, CS_MUSIC_QUEUE);
+    lua_regconstinteger(L, CS_SCRIPT_MOVER_NAMES);
+    lua_regconstinteger(L, CS_CONSTRUCTION_NAMES);
+    lua_regconstinteger(L, CS_VERSIONINFO);
+    lua_regconstinteger(L, CS_REINFSEEDS);
+    lua_regconstinteger(L, CS_SERVERTOGGLES);
+    lua_regconstinteger(L, CS_GLOBALFOGVARS);
+    lua_regconstinteger(L, CS_AXIS_MAPS_XP);
+    lua_regconstinteger(L, CS_ALLIED_MAPS_XP);
+    lua_regconstinteger(L, CS_INTERMISSION_START_TIME);
+    lua_regconstinteger(L, CS_ENDGAME_STATS);
+    lua_regconstinteger(L, CS_CHARGETIMES);
+    lua_regconstinteger(L, CS_FILTERCAMS);
+    lua_regconstinteger(L, CS_MODELS);
+    lua_regconstinteger(L, CS_SOUNDS);
+    lua_regconstinteger(L, CS_SHADERS);
+    lua_regconstinteger(L, CS_SHADERSTATE);
+    lua_regconstinteger(L, CS_SKINS);
+    lua_regconstinteger(L, CS_CHARACTERS);
+    lua_regconstinteger(L, CS_MULTI_SPAWNTARGETS);
+    lua_regconstinteger(L, CS_OID_TRIGGERS);
+    lua_regconstinteger(L, CS_OID_DATA);
+    lua_regconstinteger(L, CS_DLIGHTS);
+    lua_regconstinteger(L, CS_SPLINES);
+    lua_regconstinteger(L, CS_TAGCONNECTS);
+    lua_regconstinteger(L, CS_FIRETEAMS);
+    lua_regconstinteger(L, CS_CUSTMOTD);
+    lua_regconstinteger(L, CS_STRINGS);
+    lua_regconstinteger(L, CS_MAX);
     
     // PM type constants
     lua_regconstinteger(L, PM_NORMAL);
@@ -4059,6 +4125,31 @@ static void G_LuaRegisterConstants(lua_State* L)
     lua_regconstinteger(L, EF_AAGUN_ACTIVE);
     lua_regconstinteger(L, EF_SMOKING);
     lua_regconstinteger(L, EF_PLAYDEAD);
+    
+    // Additional Entity flag constants
+    lua_regconstinteger(L, EF_NONSOLID_BMODEL);
+    lua_regconstinteger(L, EF_READY);
+    lua_regconstinteger(L, EF_CROUCHING);
+    lua_regconstinteger(L, EF_INHERITSHADER);
+    lua_regconstinteger(L, EF_SPINNING);
+    lua_regconstinteger(L, EF_BREATH);
+    lua_regconstinteger(L, EF_TALK);
+    lua_regconstinteger(L, EF_CONNECTION);
+    lua_regconstinteger(L, EF_SMOKINGBLACK);
+    lua_regconstinteger(L, EF_HEADSHOT);
+    lua_regconstinteger(L, EF_OVERHEATING);
+    lua_regconstinteger(L, EF_VOTED);
+    lua_regconstinteger(L, EF_TAGCONNECT);
+    lua_regconstinteger(L, EF_FAKEBMODEL);
+    lua_regconstinteger(L, EF_PATH_LINK);
+    lua_regconstinteger(L, EF_ZOOMING);
+    lua_regconstinteger(L, EF_VIEWING_CAMERA);
+    lua_regconstinteger(L, EF_SPARE1);
+    lua_regconstinteger(L, EF_SPARE2);
+    lua_regconstinteger(L, EF_BOUNCE);
+    lua_regconstinteger(L, EF_BOUNCE_HALF);
+    lua_regconstinteger(L, EF_MOVER_STOP);
+    lua_regconstinteger(L, EF_MOVER_BLOCKED);
     
     // Flag constants (FL_*)
     lua_regconstinteger(L, FL_GODMODE);
