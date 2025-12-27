@@ -2035,6 +2035,12 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	G_InitWorldSession();
 
+	// Initialize team data (reset numobjectives to prevent crash on map change)
+	Team_InitGame();
+
+	// Reset remapped shaders to prevent accumulation across map changes (ET Legacy fix)
+	G_ResetRemappedShaders();
+
 	// DHM - Nerve :: Clear out spawn target config strings
 	trap_GetConfigstring( CS_MULTI_INFO, cs, sizeof(cs) );
 	Info_SetValueForKey( cs, "numspawntargets", "0" );

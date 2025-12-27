@@ -378,6 +378,11 @@ void G_DropWeapon( gentity_t *ent, weapon_t weapon )
 	gitem_t		*item;
 	trace_t		tr;
 
+	// Don't drop invalid weapons (ET Legacy fix refs #208)
+	if ( weapon <= WP_NONE || weapon >= WP_NUM_WEAPONS ) {
+		return;
+	}
+
 	item = BG_FindItemForWeapon( weapon );
 	VectorCopy( client->ps.viewangles, angles );
 
