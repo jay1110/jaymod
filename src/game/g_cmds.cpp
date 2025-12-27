@@ -1,5 +1,6 @@
 #include <bgame/impl.h>
 #include <omnibot/et/g_etbot_interface.h>
+#include <game/g_lua.h>
 
 void BotDebug(int clientNum);
 void GetBotAutonomies(int clientNum, int *weapAutonomy, int *moveAutonomy);	
@@ -3516,6 +3517,11 @@ void ClientCommand( int clientNum ) {
 
 	trap_Argv( 0, cmd, sizeof( cmd ) );
 
+	// Call Lua et_ClientCommand callback
+	if (G_LuaHook_ClientCommand(clientNum, cmd)) {
+		return;  // Command was handled by Lua
+	}
+
 	if (Q_stricmp (cmd, "say") == 0) {
 		if( !connectedUsers[ent-g_entities]->muted ) {
 			Cmd_Say_f (ent, SAY_ALL, qfalse);
@@ -3693,6 +3699,8 @@ void ClientCommand( int clientNum ) {
 		G_ShoutcasterLogout(ent);
     } else if (!Q_stricmp(cmd, "testbox")) {
         CP(va("chat \"%.0f %.0f %.0f\"", ent->client->ps.maxs[0], ent->client->ps.maxs[1], ent->client->ps.maxs[2]));
+	} else if (!Q_stricmp(cmd, "lua_status")) {
+		G_LuaStatus(ent);
 	} else {
 		trap_SendServerCommand( clientNum, va("print \"unknown cmd[lof] %s\n\"", cmd ) );
 	}

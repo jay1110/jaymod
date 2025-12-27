@@ -2175,6 +2175,9 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	// Initialize Lua
 	G_LuaInit();
+
+	// Call Lua et_InitGame callback
+	G_LuaHook_InitGame(levelTime, randomSeed, restart);
 }
 
 
@@ -2202,6 +2205,9 @@ void G_ShutdownGame( int restart ) {
 	}
 
 	G_Printf ("==== ShutdownGame ====\n");
+
+	// Call Lua et_ShutdownGame callback
+	G_LuaHook_ShutdownGame(restart);
 
 	// Shutdown Lua
 	G_LuaShutdown();
@@ -3976,6 +3982,9 @@ void G_RunFrame( int levelTime ) {
 	G_BinocWar(qfalse);
     cmd::CrazyGravity::run();
 	G_Update_CS_Airstrikes();
+
+	// Call Lua et_RunFrame callback
+	G_LuaHook_RunFrame(levelTime);
 
 	// record the time at the end of this frame - it should be about
 	// the time the next frame begins - when the server starts
