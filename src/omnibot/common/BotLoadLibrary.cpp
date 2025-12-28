@@ -220,7 +220,7 @@ HINSTANCE Omnibot_LL(const char *file)
 #endif
 	if(!hndl)
 		OB_ShowLastError("LoadLibrary");
-	Omnibot_Load_PrintMsg(OB_VA("Looking for %s, %s", g_OmnibotLibPath.c_str(), hndl ? "found." : "not found"));
+	Omnibot_Load_PrintMsg(OB_VA("Looking for %s, %s", g_OmnibotLibPath.c_str(), hndl ? "found." : "failed to load"));
 	return hndl;
 }
 
@@ -248,6 +248,8 @@ eomnibot_error Omnibot_LoadLibrary(int version, const char *lib, const char *pat
 #define SUFFIX ".x86_64"
 #elif defined __aarch64__
 #define SUFFIX ".aarch64"
+#elif defined __i386__
+#define SUFFIX ".i386"
 #else	
 #define SUFFIX
 #endif
