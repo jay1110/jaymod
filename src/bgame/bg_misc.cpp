@@ -3047,6 +3047,7 @@ qboolean BG_WeaponInWolfMP( int weapon ) {
 	case WP_SMOKE_MARKER:
 	case WP_STEN:
 	case WP_THOMPSON:
+	case WP_TRIPMINE:
 		return qtrue;
 
 	default:
