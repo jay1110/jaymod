@@ -1640,6 +1640,8 @@ public:
 			{
 				if(!g_entities[i].inuse)
 					continue;
+				if(!g_entities[i].client)
+					continue;
 				if (!IsBot(&g_entities[i]))
 					continue;
 

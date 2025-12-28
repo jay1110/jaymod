@@ -2425,7 +2425,8 @@ void constructiblemarker_setup( gentity_t *ent ) {
 	ent->target_ent = G_FindByTargetname( NULL, ent->target );
 
 	if( !ent->target_ent ) {
-		G_Error ("'misc_constructiblemarker' has a missing target '%s'\n", ent->target );
+		G_Printf ("WARNING: 'misc_constructiblemarker' has a missing target '%s'\n", ent->target );
+		return;
 	}
 
 	trap_LinkEntity( ent );
