@@ -277,6 +277,7 @@ G_PlaceTripmine
 ==========
 */
 #define TRIPMINE_MAX_DISTANCE 1024  // Maximum distance between walls for tripmine placement
+#define TRIPMINE_UNARMED_TEAM_OFFSET 4  // Offset added to team for unarmed state (matches landmine behavior)
 
 void G_PlaceTripmine(gentity_t* ent) {
 	vec3_t start, end;
@@ -343,9 +344,10 @@ void G_PlaceTripmine(gentity_t* ent) {
 
 	VectorCopy(trace.plane.normal, bomb->s.origin2);
 
-	// Set team information for unarmed state (4 = unarmed AXIS, 5 = unarmed ALLIES)
+	// Set team information for unarmed state
+	// Unarmed state uses team + offset (4 = unarmed AXIS, 5 = unarmed ALLIES)
 	// This matches landmine behavior
-	bomb->s.teamNum = ent->client->sess.sessionTeam + 4;
+	bomb->s.teamNum = ent->client->sess.sessionTeam + TRIPMINE_UNARMED_TEAM_OFFSET;
 	
 	// Store the team for coloring the laser (1 = Axis, 0 = Allied)
 	bomb->s.otherEntityNum2 = (ent->client->sess.sessionTeam == TEAM_AXIS) ? 1 : 0;

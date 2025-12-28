@@ -820,6 +820,9 @@ CG_Bomb
 ===============
 */
 
+#define TRIPMINE_LASER_ALPHA_TEAMMATE 200  // Laser visibility for teammates
+#define TRIPMINE_LASER_ALPHA_ENEMY 80      // Laser visibility for enemies
+
 static void CG_Bomb( centity_t *cent ) {
 	refEntity_t		ent, beam;
 	entityState_t	*s1;
@@ -880,9 +883,9 @@ static void CG_Bomb( centity_t *cent ) {
 	
 	// Set laser visibility - teammates see more visible laser
 	if (isTeammate) {
-		laserAlpha = 200;  // More visible for teammates and planter
+		laserAlpha = TRIPMINE_LASER_ALPHA_TEAMMATE;
 	} else {
-		laserAlpha = 80;   // Less visible for enemies
+		laserAlpha = TRIPMINE_LASER_ALPHA_ENEMY;
 	}
 	
 	// Set laser color based on team
