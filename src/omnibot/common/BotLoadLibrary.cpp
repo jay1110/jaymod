@@ -220,7 +220,7 @@ HINSTANCE Omnibot_LL(const char *file)
 #endif
 	if(!hndl)
 		OB_ShowLastError("LoadLibrary");
-	Omnibot_Load_PrintMsg(OB_VA("Looking for %s, %s", g_OmnibotLibPath.c_str(), hndl ? "found." : "not found"));
+	Omnibot_Load_PrintMsg(OB_VA("Looking for %s, %s", g_OmnibotLibPath.c_str(), hndl ? "found." : "failed to load"));
 	return hndl;
 }
 
