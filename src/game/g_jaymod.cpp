@@ -13,6 +13,17 @@ int G_TeamMaxLandMines() {
 
 /*
 ====================
+G_TeamMaxTripmines
+====================
+*/
+int G_TeamMaxTripmines() {
+	if (cvars::g_maxTripmines.ivalue < 0)
+		return 3;
+	return cvars::g_maxTripmines.ivalue;
+}
+
+/*
+====================
 G_TeamMaxArtillery
 ====================
 */

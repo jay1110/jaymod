@@ -1905,24 +1905,81 @@ evilbanigoto:
 			} else {
 				return;
 			}
-//bani - no tripmine...
-#if 0
 		} else if ( traceEnt->methodOfDeath == MOD_TRIPMINE ) {
-			// Give health until it is full, don't continue
-			traceEnt->health += 3;
+			// Tripmine arming/disarming
+			if(G_LandmineUnarmed(traceEnt)) {
+				// Opposing team cannot accidentally arm it
+				if( G_LandmineTeam(traceEnt) != ent->client->sess.sessionTeam )
+					return;
 
-			G_PrintClientSpammyCenterPrint(ent-g_entities, "Disarming tripmine...");
+				G_PrintClientSpammyCenterPrint(ent-g_entities, "Arming tripmine...");
 
-			if ( traceEnt->health >= 250 ) {
-				traceEnt->health = 255;
-				traceEnt->think = G_FreeEntity;
-				traceEnt->nextthink = level.time + FRAMETIME;
+				// Give health until it is full, don't continue
+				if (ent->client->sess.skill[SK_EXPLOSIVES_AND_CONSTRUCTION] >= 5 && (cvars::bg_sk5_eng.ivalue & SK5_ENG_CONSTRUCT))
+					traceEnt->health += 30;
+				else if (ent->client->sess.skill[SK_EXPLOSIVES_AND_CONSTRUCTION] >= 2)
+					traceEnt->health += 24;
+				else
+					traceEnt->health += 12;
 
-				Add_Ammo(ent, WP_TRIPMINE, 1, qfalse);
+				if ( traceEnt->health >= 250 ) {
+					trap_SendServerCommand(ent-g_entities, "cp \"Tripmine armed...\" 1");
+				} else {
+					return;
+				}
+
+				traceEnt->r.contents = 0;	// (player can walk through)
+				trap_LinkEntity( traceEnt );
+
+				// forty - mine id
+				traceEnt->s.otherEntityNum = ent->s.number;
+
+				// Jaybird - #14 - change owner of the mine
+				traceEnt->parent = ent;
+
+				// Don't allow disarming for sec (so guy that WAS arming doesn't start disarming it!
+				traceEnt->timestamp = level.time + 1000;
+				traceEnt->health = 0;
+
+				// Jaybird - for fading effect
+				traceEnt->s.effect1Time = level.time;
+
+				traceEnt->s.teamNum = ent->client->sess.sessionTeam;
+				traceEnt->s.modelindex2 = 0;
+
+				traceEnt->nextthink = level.time + 2000;
+				traceEnt->think = G_LandminePrime;
 			} else {
-				return;
+				// Disarming tripmine
+				if (traceEnt->timestamp > level.time)
+					return;
+				if (traceEnt->health >= 250) // have to do this so we don't score multiple times
+					return;
+
+				if (ent->client->sess.skill[SK_EXPLOSIVES_AND_CONSTRUCTION] >= 5 && (cvars::bg_sk5_eng.ivalue & SK5_ENG_CONSTRUCT))
+					traceEnt->health += 9;
+				else if (ent->client->sess.skill[SK_EXPLOSIVES_AND_CONSTRUCTION] >= 2)
+					traceEnt->health += 6;
+				else
+					traceEnt->health += 3;
+
+				G_PrintClientSpammyCenterPrint(ent-g_entities, "Defusing tripmine...");
+
+				if ( traceEnt->health >= 250 ) {
+					trap_SendServerCommand(ent-g_entities, "cp \"Tripmine defused...\" 1");
+
+					Add_Ammo(ent, WP_TRIPMINE, 1, qfalse);
+
+					if( G_LandmineTeam( traceEnt ) != ent->client->sess.sessionTeam ) {
+						G_AddSkillPoints( ent, SK_EXPLOSIVES_AND_CONSTRUCTION, 4.f );
+						G_DebugAddSkillPoints( ent, SK_EXPLOSIVES_AND_CONSTRUCTION, 4.f, "defusing an enemy tripmine" );
+					}
+
+					G_FreeEntity( traceEnt );
+				} else {
+					return;
+				}
 			}
-#endif
 		} else
 		if ( traceEnt->methodOfDeath == MOD_DYNAMITE ) {
 
@@ -3983,6 +4040,13 @@ gentity_t *weapon_grenadelauncher_fire (gentity_t *ent, int grenType) {
 		case WP_LANDMINE_BBETTY:
 		case WP_LANDMINE_PGAS:
             if (ent->client->sess.sessionTeam == TEAM_AXIS) // store team so we can generate red or blue smoke
+                m->s.otherEntityNum2 = 1;
+            else
+                m->s.otherEntityNum2 = 0;
+            break;
+
+        case WP_TRIPMINE:
+            if (ent->client->sess.sessionTeam == TEAM_AXIS)
                 m->s.otherEntityNum2 = 1;
             else
                 m->s.otherEntityNum2 = 0;

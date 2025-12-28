@@ -211,6 +211,7 @@ int      G_SkillForMOD           ( int );
 void     G_TeamDamageRestriction ( gentity_t* );
 int      G_TeamMaxArtillery      ( );
 int      G_TeamMaxLandMines      ( );
+int      G_TeamMaxTripmines      ( );
 void     ThrowingKnifeTouch      ( gentity_t*, gentity_t*, trace_t* );
 void     G_Update_CS_Airstrikes  ( );
 void     G_UpdateJaymodCS        ( );

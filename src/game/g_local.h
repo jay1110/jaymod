@@ -2329,6 +2329,7 @@ void G_SendMapEntityInfo( gentity_t* e );
 void G_SendSystemMessage( sysMsg_t message, int team );
 int G_GetSysMessageNumber( const char* sysMsg );
 int G_CountTeamLandmines ( team_t team );
+int G_CountTeamTripmines ( team_t team );
 bool G_SweepForLandmines( gentity_t* ent, float radius, int team );
 
 void G_AddClientToFireteam( int entityNum, int leaderNum );
