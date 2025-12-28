@@ -98,7 +98,7 @@ int weapBanksMultiPlayer[MAX_WEAP_BANKS_MP][MAX_WEAPS_IN_BANK_MP] = {
 	{WP_GRENADE_LAUNCHER,	WP_GRENADE_PINEAPPLE,	WP_MOLOTOV,         WP_POISON_SYRINGE,	        0,						0,							0,			0,			0,			0,		0,				0,			0,			0,			0			},
 	{WP_MEDIC_SYRINGE,		WP_PLIERS,				WP_SMOKE_MARKER,	WP_SMOKE_BOMB,				WP_POISON_GAS,			0,							0,			0,			0,			0,		0,				0,			0,			0,			0			},
 	{WP_DYNAMITE,			WP_MEDKIT,				WP_AMMO,			WP_SATCHEL,					WP_SATCHEL_DET,			0,							0,			0,			0,			0,		0,				0,			0,			0,			0			},
-	{WP_LANDMINE,			WP_LANDMINE_BBETTY,		WP_LANDMINE_PGAS,	WP_MEDIC_ADRENALINE,		0,						0,							0,			0,			0,			0,		0,				0,			0,			0,			0			},
+	{WP_LANDMINE,			WP_LANDMINE_BBETTY,		WP_LANDMINE_PGAS,	WP_TRIPMINE,				WP_MEDIC_ADRENALINE,	0,							0,			0,			0,			0,		0,				0,			0,			0,			0			},
 	{WP_BINOCULARS,			0,						0,					0,							0,						0,							0,			0,			0,			0,		0,				0,			0,			0,			0			},
 	{0,						0,						0,					0,							0,						0,							0,			0,			0,			0,		0,				0,			0,			0,			0			},
 };

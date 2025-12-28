@@ -3126,6 +3126,7 @@ static void PM_SwitchIfEmpty(void)
         case WP_MOLOTOV:
         case WP_POISON_GAS:
         case WP_SMOKE_BOMB:
+        case WP_TRIPMINE:
             break;
 
         default:
@@ -4324,6 +4325,7 @@ static void PM_Weapon( void ) {
 		case WP_LANDMINE:
 		case WP_LANDMINE_BBETTY:
 		case WP_LANDMINE_PGAS:
+		case WP_TRIPMINE:
 			// CHRUKER: b026 - Skill should first kick in at level 3
 			if( pm->skill[SK_EXPLOSIVES_AND_CONSTRUCTION] >= 3 ) {
 				if( pm->cmd.serverTime - pm->ps->classWeaponTime < (pm->engineerChargeTime*0.33f) ) {
