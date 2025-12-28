@@ -11,7 +11,7 @@
 class Engine
 {
 public:
-    typedef int (QDECL* Ptr)( int, ... );
+    typedef intptr_t (QDECL* Ptr)( intptr_t, ... );
 
     static Ptr ptr;
 
