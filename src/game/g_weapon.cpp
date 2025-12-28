@@ -1943,7 +1943,26 @@ evilbanigoto:
 			}
 		} else if ( traceEnt->methodOfDeath == MOD_TRIPMINE ) {
 			// Tripmine arming/disarming
-			if(G_LandmineUnarmed(traceEnt)) {
+			// Check tripmine team limit - similar to landmine check
+			if ( G_CountTeamTripmines(ent->client->sess.sessionTeam) >= MAX_TEAM_TRIPMINES && G_LandmineTeam(traceEnt) == ent->client->sess.sessionTeam) {
+				if(G_LandmineUnarmed(traceEnt)) {
+					trap_SendServerCommand(ent-g_entities, "cp \"Your team has too many tripmines placed...\" 1");
+
+					G_FreeEntity( traceEnt );
+
+					Add_Ammo(ent, WP_TRIPMINE, 1, qfalse);
+
+					// Give back the correct charge amount
+					if (ent->client->sess.skill[SK_EXPLOSIVES_AND_CONSTRUCTION] >= 5 && (cvars::bg_sk5_eng.ivalue & SK5_ENG_CHARGE))
+						ent->client->ps.classWeaponTime -= int( .33f * level.engineerChargeTime[ent->client->sess.sessionTeam-1] * SK5G_CHARGE_FACTOR );
+					else if (ent->client->sess.skill[SK_EXPLOSIVES_AND_CONSTRUCTION] >= 3)
+						ent->client->ps.classWeaponTime -= int( .33f * level.engineerChargeTime[ent->client->sess.sessionTeam-1] );
+					else
+						ent->client->ps.classWeaponTime -= int( .5f * level.engineerChargeTime[ent->client->sess.sessionTeam-1] );
+
+					return;
+				}
+			} else if(G_LandmineUnarmed(traceEnt)) {
 				// Opposing team cannot accidentally arm it
 				if( G_LandmineTeam(traceEnt) != ent->client->sess.sessionTeam )
 					return;

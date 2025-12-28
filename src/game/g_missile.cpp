@@ -1598,7 +1598,7 @@ G_ExplodeMines
 void G_ExplodeMines(gentity_t* ent) {
 	G_FadeItems(ent, MOD_LANDMINE);
 	G_FadeItems(ent, MOD_POISON_GAS);
-//	G_FadeItems(ent, MOD_TRIPMINE);
+	G_FadeItems(ent, MOD_TRIPMINE);
 }
 
 /*
