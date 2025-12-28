@@ -3,10 +3,10 @@
 // this file is only included when building a dll
 // syscalls.asm is included instead when building a qvm
 
-static int (QDECL *engine)( int arg, ... ) = (int (QDECL *)( int, ...))-1;
+static intptr_t (QDECL *engine)( intptr_t arg, ... ) = (intptr_t (QDECL *)( intptr_t, ...))-1;
 
 extern "C" LF_PUBLIC void
-dllEntry( int (QDECL *syscallptr)( int arg,... ) ) {
+dllEntry( intptr_t (QDECL *syscallptr)( intptr_t arg,... ) ) {
 	engine = syscallptr;
 }
 
