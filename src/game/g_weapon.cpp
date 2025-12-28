@@ -276,11 +276,15 @@ void Weapon_Medic( gentity_t *ent ) {
 G_PlaceTripmine
 ==========
 */
+#define TRIPMINE_MAX_DISTANCE 1024  // Maximum distance between walls for tripmine placement
+#define TRIPMINE_UNARMED_TEAM_OFFSET 4  // Offset added to team for unarmed state (matches landmine behavior)
+
 void G_PlaceTripmine(gentity_t* ent) {
 	vec3_t start, end;
-	trace_t trace;
+	trace_t trace, oppositeTrace;
 	gentity_t* bomb;
 	vec3_t forward;
+	vec3_t oppositeEnd;
 
 	VectorCopy( ent->client->ps.origin, start );
 	start[2] += ent->client->ps.viewheight;
@@ -291,14 +295,38 @@ void G_PlaceTripmine(gentity_t* ent) {
 
 	trap_Trace(&trace, start, NULL, NULL, end, ent->s.number, MASK_SHOT);
 
+	// Check if we hit a wall
+	if (trace.fraction == 1.0f || trace.entityNum != ENTITYNUM_WORLD) {
+		trap_SendServerCommand(ent-g_entities, "cp \"Tripmine must be placed on a wall\" 1");
+		// Give ammo back
+		ent->client->ps.ammoclip[BG_FindClipForWeapon(WP_TRIPMINE)] += 1;
+		return;
+	}
+
+	// Now trace in the opposite direction from the wall to find the opposing wall
+	// Start from the wall hit point, trace in the direction of the normal (opposite of forward)
+	VectorMA(trace.endpos, 2, trace.plane.normal, start);  // Move slightly off the wall
+	VectorMA(start, TRIPMINE_MAX_DISTANCE, trace.plane.normal, oppositeEnd);
+
+	trap_Trace(&oppositeTrace, start, NULL, NULL, oppositeEnd, ent->s.number, MASK_SHOT);
+
+	// Check if there's an opposing wall within max distance
+	if (oppositeTrace.fraction == 1.0f) {
+		trap_SendServerCommand(ent-g_entities, "cp \"Tripmine must be placed between walls (no opposing wall found)\" 1");
+		// Give ammo back
+		ent->client->ps.ammoclip[BG_FindClipForWeapon(WP_TRIPMINE)] += 1;
+		return;
+	}
+
 	bomb = G_Spawn();
 	bomb->r.svFlags	= SVF_BROADCAST;
 	bomb->s.eType = ET_BOMB;
 	bomb->s.eFlags = 0;
 	bomb->s.weapon = WP_TRIPMINE;
 	bomb->parent = ent;
-	bomb->think = G_TripMinePrime;
-	bomb->nextthink = level.time + 2000;
+	// Don't auto-prime - tripmine requires pliers to arm
+	bomb->think = NULL;
+	bomb->nextthink = 0;
 	bomb->splashDamage = 300;
 	bomb->splashRadius = 300;
 	bomb->methodOfDeath = MOD_TRIPMINE;
@@ -315,6 +343,14 @@ void G_PlaceTripmine(gentity_t* ent) {
 	G_SetAngle(bomb, vec3_origin);
 
 	VectorCopy(trace.plane.normal, bomb->s.origin2);
+
+	// Set team information for unarmed state
+	// Unarmed state uses team + offset (4 = unarmed AXIS, 5 = unarmed ALLIES)
+	// This matches landmine behavior
+	bomb->s.teamNum = ent->client->sess.sessionTeam + TRIPMINE_UNARMED_TEAM_OFFSET;
+	
+	// Store the team for coloring the laser (1 = Axis, 0 = Allied)
+	bomb->s.otherEntityNum2 = (ent->client->sess.sessionTeam == TEAM_AXIS) ? 1 : 0;
 
 	trap_LinkEntity(bomb);
 }
@@ -1948,7 +1984,7 @@ evilbanigoto:
 				traceEnt->s.modelindex2 = 0;
 
 				traceEnt->nextthink = level.time + 2000;
-				traceEnt->think = G_LandminePrime;
+				traceEnt->think = G_TripMinePrime;
 			} else {
 				// Disarming tripmine
 				if (traceEnt->timestamp > level.time)

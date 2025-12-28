@@ -820,12 +820,19 @@ CG_Bomb
 ===============
 */
 
+#define TRIPMINE_LASER_ALPHA_TEAMMATE 200  // Laser visibility for teammates
+#define TRIPMINE_LASER_ALPHA_ENEMY 80      // Laser visibility for enemies
+
 static void CG_Bomb( centity_t *cent ) {
 	refEntity_t		ent, beam;
 	entityState_t	*s1;
 	const weaponInfo_t		*weapon;
 	vec3_t			end;
 	trace_t			trace;
+	qboolean		isAxisTeam;
+	qboolean		isTeammate;
+	team_t			playerTeam;
+	int				laserAlpha;
 
 	memset(&ent, 0, sizeof(ent));
 
@@ -845,6 +852,10 @@ static void CG_Bomb( centity_t *cent ) {
 
 	CG_AddRefEntityWithPowerups( &ent, s1->powerups, TEAM_FREE, s1, vec3_origin );
 
+	// Only show laser if tripmine is armed (teamNum is TEAM_AXIS or TEAM_ALLIES)
+	if (s1->teamNum != TEAM_AXIS && s1->teamNum != TEAM_ALLIES) {
+		return;
+	}
 	
 	memset(&beam, 0, sizeof(beam));
 
@@ -859,10 +870,37 @@ static void CG_Bomb( centity_t *cent ) {
 	beam.reType = RT_RAIL_CORE;
 	beam.renderfx = RF_NOSHADOW;
 	beam.customShader = cgs.media.railCoreShader;
-	beam.shaderRGBA[0] = 255;
-	beam.shaderRGBA[1] = 0;
-	beam.shaderRGBA[2] = 0;
-	beam.shaderRGBA[3] = 255;
+
+	// Determine team colors
+	// s1->otherEntityNum2: 1 = Axis mine, 0 = Allied mine
+	isAxisTeam = (qboolean)(s1->otherEntityNum2 == 1);
+	
+	// Get player's team
+	playerTeam = cgs.clientinfo[cg.clientNum].team;
+	
+	// Check if player is on the same team as the tripmine
+	isTeammate = (qboolean)((isAxisTeam && playerTeam == TEAM_AXIS) || (!isAxisTeam && playerTeam == TEAM_ALLIES));
+	
+	// Set laser visibility - teammates see more visible laser
+	if (isTeammate) {
+		laserAlpha = TRIPMINE_LASER_ALPHA_TEAMMATE;
+	} else {
+		laserAlpha = TRIPMINE_LASER_ALPHA_ENEMY;
+	}
+	
+	// Set laser color based on team
+	if (isAxisTeam) {
+		// Red laser for Axis
+		beam.shaderRGBA[0] = 255;
+		beam.shaderRGBA[1] = 0;
+		beam.shaderRGBA[2] = 0;
+	} else {
+		// Blue laser for Allied
+		beam.shaderRGBA[0] = 0;
+		beam.shaderRGBA[1] = 0;
+		beam.shaderRGBA[2] = 255;
+	}
+	beam.shaderRGBA[3] = laserAlpha;
 
 
 	AxisClear( beam.axis );

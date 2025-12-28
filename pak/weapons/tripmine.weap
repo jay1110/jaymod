@@ -2,7 +2,7 @@ weaponDef
 {
 	client {
 		
-		weaponConfig	"models/multiplayer/landmine/weapon.cfg"
+		weaponConfig	"models/multiplayer/tripmine/weapon.cfg"
 		handsModel		"models/multiplayer/landmine/v_landmine_hand.md3"
 		
 		flashSound		"sound/weapons/misc/fire_water.wav"
