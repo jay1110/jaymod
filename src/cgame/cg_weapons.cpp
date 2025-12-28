@@ -4394,6 +4394,7 @@ void CG_OutOfAmmoChange( qboolean allowforceswitch ) {
 			case WP_LANDMINE:
 			case WP_LANDMINE_BBETTY:
 			case WP_LANDMINE_PGAS:
+			case WP_TRIPMINE:
 				if (CG_WeaponSelectable(WP_PLIERS)) {
 					cg.weaponSelect = WP_PLIERS;
 					CG_FinishWeaponChange(cg.predictedPlayerState.weapon, WP_PLIERS);
