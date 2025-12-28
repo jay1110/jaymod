@@ -24,6 +24,7 @@ namespace objects {
     extern Cvar g_protestMessage;
 
     extern Cvar g_maxLandmines;
+    extern Cvar g_maxTripmines;
     extern Cvar g_snap;
     extern Cvar g_shutdownExit;
     extern Cvar g_warmup;

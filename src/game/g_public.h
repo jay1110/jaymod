@@ -45,6 +45,7 @@
 
 // Jaybird - custom landmines
 #define MAX_TEAM_LANDMINES	G_TeamMaxLandMines()
+#define MAX_TEAM_TRIPMINES	G_TeamMaxTripmines()
 
 typedef qboolean (*addToSnapshotCallback)( int entityNum, int clientNum );
 

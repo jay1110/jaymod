@@ -178,7 +178,7 @@ ammotable_t ammoTableMP[WP_NUM_WEAPONS] = {
 	{	1,				0,		1,		0,		1,		100,	DELAY_LOW,		100,	0,		0,		MOD_LANDMINE			},	// WP_LANDMINE				// 26
 	{	1,				0,		1,		0,		0,		3000,	DELAY_LOW,		2000,	0,		0,		MOD_SATCHEL				},	// WP_SATCHEL				// 27
 	{	1,				0,		1,		0,		0,		3000,	722,			2000,	0,		0,		0,						},	// WP_SATCHEL_DET			// 28
-	{	6,				1,		1,		0,		0,		2000,	DELAY_HIGH,		2000,	0,		0,		MOD_TRIPMINE			},	// WP_TRIPMINE				// 29
+	{	6,				1,		1,		0,		1,		2000,	DELAY_HIGH,		2000,	0,		0,		MOD_TRIPMINE			},	// WP_TRIPMINE				// 29
 
 	{	1,				0,		10,		0,		1,		1000,	DELAY_THROW,	1600,	0,		0,		MOD_SMOKEBOMB			},	// WP_SMOKE_BOMB			// 30
 	{	450,			1,		150,	0,		150,	3000,	DELAY_LOW,		66,		1500,	300,	MOD_MOBILE_MG42			},	// WP_MOBILE_MG42			// 31

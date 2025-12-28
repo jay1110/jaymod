@@ -1455,6 +1455,33 @@ int G_CountTeamLandmines ( team_t team ) {
 	return cnt;
 }
 
+int G_CountTeamTripmines ( team_t team ) {
+	gentity_t* e;
+	int i;
+	int cnt = 0;
+
+	e = &g_entities[MAX_CLIENTS];
+	for( i = MAX_CLIENTS ; i<level.num_entities ; i++, e++ ) {
+		if ( !e->inuse ) {
+			continue;
+		}
+
+		if ( e->s.eType != ET_MISSILE) {
+			continue;
+		}
+
+		if ( e->methodOfDeath != MOD_TRIPMINE ) {
+			continue;
+		}
+
+		if ( e->s.teamNum % 4 == team && e->s.teamNum < 4) {
+			cnt++;
+		}
+	}
+
+	return cnt;
+}
+
 bool G_SweepForLandmines( gentity_t* ent, float radius, int team ) {
     if (level.timeCurrent < ent->client->pers.sweepForLandminesAlarm)
         return qfalse;
@@ -1950,6 +1977,13 @@ gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t dir, int grenadeW
 			bolt->timestamp = level.time + 16500;
 			break;
 
+		case WP_TRIPMINE:
+			noExplode = qtrue;
+			bolt->nextthink = level.time + 15000;
+			bolt->think = DynaSink;
+			bolt->timestamp = level.time + 16500;
+			break;
+
 		case WP_SATCHEL:
 			noExplode = qtrue;
 			bolt->nextthink = 0;
@@ -2147,6 +2181,26 @@ gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t dir, int grenadeW
 			bolt->methodOfDeath			= MOD_POISON_GAS;
 			bolt->splashMethodOfDeath	= MOD_POISON_GAS;
 			bolt->poisonGasWeaponType	= grenadeWPID;
+			bolt->s.eFlags				= (EF_BOUNCE | EF_BOUNCE_HALF);
+			bolt->health				= 5;
+			bolt->takedamage			= qtrue;
+			bolt->r.contents			= CONTENTS_CORPSE;	// (player can walk through)
+
+			bolt->r.snapshotCallback	= qtrue;
+
+			VectorSet(bolt->r.mins, -16, -16, 0);
+			VectorCopy(bolt->r.mins, bolt->r.absmin);
+			VectorSet(bolt->r.maxs, 16, 16, 16);
+			VectorCopy(bolt->r.maxs, bolt->r.absmax);
+			break;
+		case WP_TRIPMINE:
+			bolt->accuracy				= 0;
+			bolt->s.teamNum				= self->client->sess.sessionTeam + 4;
+			bolt->classname				= "tripmine";
+			bolt->damage				= 0;
+			bolt->splashRadius			= 300;
+			bolt->methodOfDeath			= MOD_TRIPMINE;
+			bolt->splashMethodOfDeath	= MOD_TRIPMINE;
 			bolt->s.eFlags				= (EF_BOUNCE | EF_BOUNCE_HALF);
 			bolt->health				= 5;
 			bolt->takedamage			= qtrue;

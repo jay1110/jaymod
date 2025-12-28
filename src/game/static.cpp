@@ -96,6 +96,7 @@ namespace objects {
     Cvar g_hitmodeZone         ( "g_hitmodeZone",          "1", 0, AbstractHitModel::cvarZone );
 
     Cvar g_maxLandmines ( "team_maxLandmines", "10" );
+    Cvar g_maxTripmines ( "team_maxTripmines", "3" );
     Cvar g_shutdownExit ( "g_shutdownExit",    "0" );
     Cvar g_snap         ( "g_snap",            "7" );
     Cvar g_warmup       ( "g_warmup",          "60", 0, cb_g_warmup );
