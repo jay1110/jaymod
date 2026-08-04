@@ -67,8 +67,8 @@ PLATFORM=osx-arm64 make release
 | linux-aarch64 | `build.linux-aarch64-release/game/qagame.mp.aarch64.so` | `build.linux-aarch64-release/cgame/cgame.mp.aarch64.so` | `build.linux-aarch64-release/ui/ui.mp.aarch64.so` |
 | win32 | `build.mingw-release/game/qagame_mp_x86.dll` | `build.mingw-release/cgame/cgame_mp_x86.dll` | `build.mingw-release/ui/ui_mp_x86.dll` |
 | win64 | `build.mingw64-release/game/qagame_mp_x64.dll` | `build.mingw64-release/cgame/cgame_mp_x64.dll` | `build.mingw64-release/ui/ui_mp_x64.dll` |
-| osx64 | `build.osx64-release/game/qagame.mp.x86_64.dylib` | `build.osx64-release/cgame/cgame.mp.x86_64.dylib` | `build.osx64-release/ui/ui.mp.x86_64.dylib` |
-| osx-arm64 | `build.osx-arm64-release/game/qagame.mp.arm64.dylib` | `build.osx-arm64-release/cgame/cgame.mp.arm64.dylib` | `build.osx-arm64-release/ui/ui.mp.arm64.dylib` |
+| osx64 | `build.osx64-release/game/qagame_mac` | `build.osx64-release/cgame/cgame_mac` | `build.osx64-release/ui/ui_mac` |
+| osx-arm64 | `build.osx-arm64-release/game/qagame_mac` | `build.osx-arm64-release/cgame/cgame_mac` | `build.osx-arm64-release/ui/ui_mac` |
 
 ## GitHub Actions Workflows
 

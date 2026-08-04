@@ -31,6 +31,8 @@ $(MODULE.PKG.pk3):
 .PHONY: $(MODULE.PKG.tar)
 $(MODULE.PKG.tar):
 	$(call print.HEADER,CREATING,$@)
+# Only the legacy 'osx' platform wraps the module in a zipped .bundle; osx64 and
+# osx-arm64 link a plain Mach-O bundle which is copied like every other platform.
 ifneq ($(PROJECT.platformNamef),osx)
 	$(call fn.cp,$(MODULE.GAME.so),$(MODULE.PKG.stage/))
 else
