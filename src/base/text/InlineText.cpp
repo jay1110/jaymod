@@ -207,7 +207,7 @@ InlineText::InlineText( const string& v )
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#if defined( JAYMOD_OSX ) || defined( JAYMOD_LINUX64 )
+#if defined( JAYMOD_OSX ) || defined( JAYMOD_LINUX64 ) || defined( JAYMOD_LINUX_AARCH64 ) || defined( JAYMOD_OSX64 ) || defined( JAYMOD_OSX_ARM64 )
 InlineText::InlineText( size_t v )
     : color     ( xcnone )
     , flags     ( ios::fixed )
@@ -419,7 +419,7 @@ InlineText::operator()( const string& v )
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#if defined( JAYMOD_OSX ) || defined( JAYMOD_LINUX64 )
+#if defined( JAYMOD_OSX ) || defined( JAYMOD_LINUX64 ) || defined( JAYMOD_LINUX_AARCH64 ) || defined( JAYMOD_OSX64 ) || defined( JAYMOD_OSX_ARM64 )
 InlineText&
 InlineText::operator()( size_t v )
 {

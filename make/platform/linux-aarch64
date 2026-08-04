@@ -1,0 +1,19 @@
+include make/platform/linux64
+
+###############################################################################
+
+IDMODULE.suffix = .mp.aarch64.so
+
+###############################################################################
+
+CXX = /usr/bin/aarch64-linux-gnu-g++
+AR  = /usr/bin/aarch64-linux-gnu-ar
+
+CXX.D       = JAYMOD_LINUX_AARCH64
+CXX.opt.BIT =
+CXX.opt.O   = -O3 -ffast-math
+
+###############################################################################
+
+SPECIALS.name  = linux-aarch64
+SPECIALS.build = build.linux-aarch64
