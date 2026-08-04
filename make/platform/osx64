@@ -2,7 +2,8 @@ GCC/ = /usr/
 
 ###############################################################################
 
-IDMODULE.suffix  = .mp.x86_64.dylib
+IDMODULE.suffix  = _mac
+IDMODULE.prefix  =
 STATICLIB.suffix = .a
 
 ###############################################################################
@@ -14,14 +15,14 @@ ADVAPI.l   =
 
 ###############################################################################
 
-M4  = m4
-TAR = tar
-AR  = ar
-RANLIB = ranlib
+M4     = m4
+TAR    = tar
+AR     = ar
+RANLIB = /usr/bin/ranlib
 
 ###############################################################################
 
-CXX = $(GCC/)bin/g++
+CXX = $(GCC/)bin/clang++
 
 CXX.pch.ext  = gch
 CXX.pch.arch = default
@@ -33,21 +34,22 @@ CXX.opt.R   = $(call fnPrefix,-Xlinker -rpath ,$(CXX.R) $($(CXX.inherit).CXX.R))
 CXX.opt.U   = $(call fnPrefix,-U,$(CXX.U) $($(CXX.inherit).CXX.U))
 CXX.opt.l   = $(call fnPrefix,-l,$(CXX.l) $($(CXX.inherit).CXX.l))
 
-CXX.opt.BIT    = -arch x86_64
+CXX.arch       = x86_64
+CXX.opt.arch   = $(call fnPrefix,-arch ,$(CXX.arch))
 CXX.opt.ML     = -fmessage-length=0
 CXX.opt.NSA    = -fno-strict-aliasing
 CXX.opt.O      = -O3 -ffast-math
-CXX.opt.PIC    = -fPIC
-CXX.opt.W      = -Wall -Winvalid-pch -Wno-write-strings
+CXX.opt.PIC    =
+CXX.opt.W      = -w
 CXX.opt.g      = -g
 CXX.opt.pipe   = -pipe
 CXX.opt.p      = -p
 CXX.opt.static =
 CXX.opt.std    = -std=gnu++14 -fno-exceptions -fno-rtti
-CXX.opt.vis    = -fvisibility=hidden
+CXX.opt.vis    =
 
 CXX.ldopts.exe =
-CXX.ldopts.so  = -dynamiclib -Wl,-undefined,error
+CXX.ldopts.so  = -bundle -undefined dynamic_lookup
 
 ###############################################################################
 
@@ -58,18 +60,17 @@ CXX.R =
 CXX.U =
 CXX.l =
 
-CXX.BIT    = 1
 CXX.ML     = 1
 CXX.NSA    = 1
 CXX.O      =
-CXX.PIC    = 1
+CXX.PIC    =
 CXX.W      = 1
 CXX.g      =
 CXX.pipe   = 1
 CXX.p      =
 CXX.static =
 CXX.std    = 1
-CXX.vis    = 1
+CXX.vis    =
 
 ###############################################################################
 
@@ -79,7 +80,8 @@ CXX.fnStrip =
 
 CXX.fnCompile = $(call print.COMMAND.normal,$(CXX),$(2),$(strip \
 	$(CXX) \
-    $(foreach i,pipe W ML BIT std NSA vis PIC O g p,$(foreach j,$(CXX.$(i)),$(CXX.opt.$(i)))) \
+	$(CXX.opt.arch) \
+    $(foreach i,pipe W ML std NSA vis PIC O g p,$(foreach j,$(CXX.$(i)),$(CXX.opt.$(i)))) \
 	$(CXX.opt.D) \
 	$(CXX.opt.I) \
 	$(CXX.opt.U) \
@@ -92,7 +94,8 @@ CXX.fnCompilePch = $(CXX.fnCompile)
 
 CXX.fnPrecompile = $(call print.COMMAND.magenta,$(CXX),$(2),$(strip \
 	$(CXX) \
-    $(foreach i,pipe W ML BIT std NSA vis PIC O g p,$(foreach j,$(CXX.$(i)),$(CXX.opt.$(i)))) \
+	$(CXX.opt.arch) \
+    $(foreach i,pipe W ML std NSA vis PIC O g p,$(foreach j,$(CXX.$(i)),$(CXX.opt.$(i)))) \
 	$(CXX.opt.D) \
 	$(CXX.opt.I) \
 	$(CXX.opt.U) \
@@ -114,7 +117,8 @@ CXX.fnCompileStatic = $(call print.STATIC,$(AR),$(1),$(2),$(AR) cq $(1) $(2))
 
 CXX.fnLinkExe = $(call print.LINK,$(CXX),$(1),$(3),$(4),$(strip \
     $(CXX) \
-    $(foreach i,pipe W ML BIT std NSA vis PIC O g p static,$(foreach j,$(CXX.$(i)),$(CXX.opt.$(i)))) \
+    $(CXX.opt.arch) \
+    $(foreach i,pipe W ML std NSA vis PIC O g p static,$(foreach j,$(CXX.$(i)),$(CXX.opt.$(i)))) \
     $(CXX.opt.D) \
     $(CXX.opt.I) \
     $(CXX.opt.U) \
@@ -134,7 +138,8 @@ CXX.fnLinkExe = $(call print.LINK,$(CXX),$(1),$(3),$(4),$(strip \
 # 2 - object list
 CXX.fnLinkSo = $(call print.LINK,$(CXX),$(1),$(2),$(strip \
     $(CXX) \
-    $(foreach i,pipe W ML BIT std NSA vis PIC O g p static,$(foreach j,$(CXX.$(i)),$(CXX.opt.$(i)))) \
+    $(CXX.opt.arch) \
+    $(foreach i,pipe W ML std NSA vis PIC O g p static,$(foreach j,$(CXX.$(i)),$(CXX.opt.$(i)))) \
     $(CXX.opt.D) \
     $(CXX.opt.I) \
     $(CXX.opt.U) \
