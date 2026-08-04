@@ -3,9 +3,9 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#if defined( JAYMOD_LINUX )
+#if defined( JAYMOD_LINUX ) || defined( JAYMOD_LINUX64 )
 #    include <base/linux/public.h>
-#elif defined( JAYMOD_MINGW )
+#elif defined( JAYMOD_MINGW ) || defined( JAYMOD_MINGW64 )
 #    include <base/mingw/public.h>
 #elif defined( JAYMOD_OSX )
 #    include <base/osx/public.h>

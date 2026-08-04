@@ -230,7 +230,7 @@ int G_GetWeaponClassForMOD( meansOfDeath_t mod );
 
 #define MAX_NETNAME			36
 
-#define	CFOFS(x) ((int)&(((gclient_t *)0)->x))
+#define	CFOFS(x) ((int)offsetof(gclient_t, x))
 
 #define MAX_COMMANDER_TEAM_SOUNDS 16
 
@@ -1790,7 +1790,7 @@ extern	gentity_t		g_entities[];
 extern	gclient_t		g_clients[];
 extern g_campaignInfo_t g_campaigns[];
 
-#define	FOFS(x) ((int)&(((gentity_t *)0)->x))
+#define	FOFS(x) ((int)offsetof(gentity_t, x))
 
 extern	vmCvar_t	g_OmniBotPath;
 extern	vmCvar_t	g_OmniBotEnable;
@@ -2384,7 +2384,7 @@ void InitialServerEntitySetup();
 g_serverEntity_t *FindServerEntity( g_serverEntity_t *from, int fieldofs, char *match );
 
 
-#define	SE_FOFS(x) ((int)&(((g_serverEntity_t *)0)->x))
+#define	SE_FOFS(x) ((int)offsetof(g_serverEntity_t, x))
 
 
 // HRESULTS

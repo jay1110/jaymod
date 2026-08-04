@@ -322,7 +322,10 @@ string
 toString( const void* ptr )
 {
     string result;
-    return toHexString( (uint32)ptr, result );
+    ostringstream oss;
+    oss << "0x" << hex << setw(sizeof(void*)*2) << setfill('0') << (unsigned long long)(size_t)ptr;
+    result = oss.str();
+    return result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -330,7 +333,10 @@ toString( const void* ptr )
 string&
 toString( const void* ptr, string& out )
 {
-    return toHexString( (uint32)ptr, out );
+    ostringstream oss;
+    oss << "0x" << hex << setw(sizeof(void*)*2) << setfill('0') << (unsigned long long)(size_t)ptr;
+    out = oss.str();
+    return out;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

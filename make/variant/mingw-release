@@ -1,2 +1,2 @@
 CXX.O  = 1
-CXX.fnStrip = $(GCC/)bin/strip $(1)
+CXX.fnStrip = /usr/bin/i686-w64-mingw32-strip $(1)

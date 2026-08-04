@@ -2,7 +2,7 @@ GCC/ = /usr/
 
 ###############################################################################
 
-IDMODULE.suffix = .mp.i386.so
+IDMODULE.suffix = .mp.x86_64.so
 STATICLIB.suffix   = .a
 
 ###############################################################################
@@ -11,6 +11,7 @@ DYNLOAD.l  = dl
 MATH.l     = m
 IPHLPAPI.l =
 ADVAPI.l   =
+WS2_32.l   =
 
 ###############################################################################
 
@@ -32,10 +33,10 @@ CXX.opt.R = $(call fnPrefix,-Xlinker -R,$(CXX.R) $($(CXX.inherit).CXX.R))
 CXX.opt.U = $(call fnPrefix,-U,$(CXX.U) $($(CXX.inherit).CXX.U))
 CXX.opt.l = $(call fnPrefix,-l,$(CXX.l) $($(CXX.inherit).CXX.l))
 
-CXX.opt.BIT    = -m32
+CXX.opt.BIT    = -m64
 CXX.opt.ML     = -fmessage-length=0
 CXX.opt.NSA    = -fno-strict-aliasing
-CXX.opt.O      = -O3 -march=i686 -ffast-math
+CXX.opt.O      = -O3 -march=x86-64 -ffast-math
 CXX.opt.PIC    = -fPIC
 CXX.opt.W      = -Wall -Winvalid-pch -Wno-write-strings
 CXX.opt.g      = -g
@@ -50,7 +51,7 @@ CXX.ldopts.so  = -shared -Wl,-z,defs -Wl,-z,relro -Wl,-z,now -Wl,-Bsymbolic
 
 ###############################################################################
 
-CXX.D =
+CXX.D = JAYMOD_LINUX64
 CXX.I = $(BUILD/) $(PROJECT/)src $(PROJECT/)pak
 CXX.L = $(BUILD/)
 CXX.R =
@@ -148,34 +149,12 @@ CXX.fnLinkSo = $(call print.LINK,$(CXX),$(1),$(2),$(strip \
 
 ###############################################################################
 
-SPECIALS.name  = linux
-SPECIALS.build = build
+SPECIALS.name  = linux64
+SPECIALS.build = build.linux64
 SPECIALS.base  = $(PROJECT.packageBase)-$(SPECIALS.name)
 SPECIALS.base/ = $(BUILD/)$(SPECIALS.base)/
 
-specials::
-	$(MAKE) VARIANT=release-athlonXP
-	$(MAKE) VARIANT=release-athlon64
-	$(MAKE) VARIANT=release-amdfam10
-	$(MAKE) VARIANT=release-pentium4
-	$(MAKE) VARIANT=release-prescott
-	$(MAKE) VARIANT=release-core2
-	$(call fn.rm.fr,$(PKGSPECIAL.base/))
-	$(call fn.mkdir,$(SPECIALS.base/)athlonXP)
-	$(call fn.mkdir,$(SPECIALS.base/)athlon64)
-	$(call fn.mkdir,$(SPECIALS.base/)amdfam10)
-	$(call fn.mkdir,$(SPECIALS.base/)pentium4)
-	$(call fn.mkdir,$(SPECIALS.base/)prescott)
-	$(call fn.mkdir,$(SPECIALS.base/)core2)
-	$(call fn.cp,$(MODULE.GAME.so:$(BUILD/)%=$(SPECIALS.build)-release-athlonXP/%),$(SPECIALS.base/)athlonXP/.)
-	$(call fn.cp,$(MODULE.GAME.so:$(BUILD/)%=$(SPECIALS.build)-release-athlon64/%),$(SPECIALS.base/)athlon64/.)
-	$(call fn.cp,$(MODULE.GAME.so:$(BUILD/)%=$(SPECIALS.build)-release-amdfam10/%),$(SPECIALS.base/)amdfam10/.)
-	$(call fn.cp,$(MODULE.GAME.so:$(BUILD/)%=$(SPECIALS.build)-release-pentium4/%),$(SPECIALS.base/)pentium4/.)
-	$(call fn.cp,$(MODULE.GAME.so:$(BUILD/)%=$(SPECIALS.build)-release-prescott/%),$(SPECIALS.base/)prescott/.)
-	$(call fn.cp,$(MODULE.GAME.so:$(BUILD/)%=$(SPECIALS.build)-release-core2/%),$(SPECIALS.base/)core2/.)
-	$(TAR) czf $(BUILD/)$(SPECIALS.base).tar.gz -C $(BUILD/) ./$(SPECIALS.base)
-
-world:: default debug release specials
+world:: default debug release
 
 ###############################################################################
 

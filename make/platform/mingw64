@@ -1,8 +1,8 @@
-include make/platform/linux
+include make/platform/linux64
 
 ###############################################################################
 
-IDMODULE.suffix = _mp_x86.dll
+IDMODULE.suffix = _mp_x64.dll
 
 ###############################################################################
 
@@ -14,16 +14,18 @@ WS2_32.l   = ws2_32
 
 ###############################################################################
 
-CXX = /usr/bin/i686-w64-mingw32-g++
-AR  = /usr/bin/i686-w64-mingw32-ar
+CXX = /usr/bin/x86_64-w64-mingw32-g++
+AR  = /usr/bin/x86_64-w64-mingw32-ar
 
+CXX.D          = JAYMOD_MINGW64
 CXX.opt.PIC    =
 CXX.opt.vis    =
+CXX.opt.BIT    =
 CXX.opt.static = -static-libgcc -static-libstdc++
 
 CXX.ldopts.so = -shared
 
 ###############################################################################
 
-SPECIALS.name  = win32
-SPECIALS.build = build.mingw
+SPECIALS.name  = win64
+SPECIALS.build = build.mingw64
