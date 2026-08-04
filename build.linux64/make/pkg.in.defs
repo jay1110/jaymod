@@ -1,0 +1,14 @@
+MODULE.PKG.in.bin += ./pkg/mapscripts/battery.script
+MODULE.PKG.in.bin += ./pkg/mapscripts/railgun_lms.script
+MODULE.PKG.in.bin += ./pkg/mapscripts/radar.script
+MODULE.PKG.in.bin += ./pkg/mapscripts/oasis.script
+MODULE.PKG.in.bin += ./pkg/mapscripts/railgun.script
+MODULE.PKG.in.bin += ./pkg/mapscripts/fueldump.script
+MODULE.PKG.in.bin += ./pkg/mapscripts/oasis_lms.script
+MODULE.PKG.in.bin += ./pkg/mapscripts/fueldump_lms.script
+MODULE.PKG.in.bin += ./pkg/mapscripts/goldrush.script
+MODULE.PKG.in.m4 += ./pkg/linux/serverctl.m4
+MODULE.PKG.in.m4 += ./pkg/linux/convert_shrub.m4
+MODULE.PKG.in.m4 += ./pkg/server.cfg.m4
+MODULE.PKG.in.m4 += ./pkg/README.txt.m4
+MODULE.PKG.in.m4 += ./pkg/jaymod.cfg.m4

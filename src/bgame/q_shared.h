@@ -90,6 +90,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <limits.h>
+#include <stdint.h>
 #include <sys/stat.h> // rain
 #include <float.h>
 
