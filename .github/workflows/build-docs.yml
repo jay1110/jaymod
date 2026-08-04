@@ -3,6 +3,9 @@ name: Build Documentation
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-docs:
     name: Build Documentation
