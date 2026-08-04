@@ -17,6 +17,7 @@ WS2_32.l   = ws2_32
 CXX = /usr/bin/x86_64-w64-mingw32-g++
 AR  = /usr/bin/x86_64-w64-mingw32-ar
 
+CXX.D          = JAYMOD_MINGW64
 CXX.opt.PIC    =
 CXX.opt.vis    =
 CXX.opt.BIT    =

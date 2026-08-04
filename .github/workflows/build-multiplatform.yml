@@ -1,0 +1,101 @@
+name: Multi-Platform Build
+
+on:
+  push:
+    branches:
+      - master
+      - 'feature/**'
+      - 'fix/**'
+      - 'copilot/**'
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-linux64:
+    name: Build linux64
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential python3 zip m4
+
+      - name: Make info.py executable
+        run: chmod +x project/info.py
+
+      - name: Build linux64 release
+        run: PLATFORM=linux64 make -j$(nproc) release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jaymod-linux64
+          path: |
+            build.linux64-release/game/qagame.mp.x86_64.so
+            build.linux64-release/cgame/cgame.mp.x86_64.so
+            build.linux64-release/ui/ui.mp.x86_64.so
+
+  build-linux32:
+    name: Build linux32
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential python3 zip m4 gcc-multilib g++-multilib
+
+      - name: Make info.py executable
+        run: chmod +x project/info.py
+
+      - name: Build linux32 release
+        run: PLATFORM=linux make -j$(nproc) release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jaymod-linux32
+          path: |
+            build.linux-release/game/qagame.mp.i386.so
+            build.linux-release/cgame/cgame.mp.i386.so
+            build.linux-release/ui/ui.mp.i386.so
+
+  build-windows:
+    name: Build Windows (mingw32 + mingw64)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential python3 zip m4 mingw-w64
+
+      - name: Make info.py executable
+        run: chmod +x project/info.py
+
+      - name: Build mingw32 release
+        run: PLATFORM=mingw make -j$(nproc) release
+
+      - name: Build mingw64 release
+        run: PLATFORM=mingw64 make -j$(nproc) release
+
+      - name: Upload mingw32 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jaymod-win32
+          path: |
+            build.mingw-release/game/qagame_mp_x86.dll
+            build.mingw-release/cgame/cgame_mp_x86.dll
+            build.mingw-release/ui/ui_mp_x86.dll
+
+      - name: Upload mingw64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jaymod-win64
+          path: |
+            build.mingw64-release/game/qagame_mp_x64.dll
+            build.mingw64-release/cgame/cgame_mp_x64.dll
+            build.mingw64-release/ui/ui_mp_x64.dll

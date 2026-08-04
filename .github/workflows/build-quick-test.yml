@@ -1,0 +1,49 @@
+name: Quick Test (linux64 qagame)
+
+on:
+  push:
+    branches:
+      - master
+      - 'feature/**'
+      - 'fix/**'
+      - 'copilot/**'
+  pull_request:
+    branches:
+      - master
+      - 'feature/**'
+      - 'fix/**'
+      - 'copilot/**'
+  workflow_dispatch:
+
+jobs:
+  build-quick-test:
+    name: Quick Test — linux64 qagame
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential python3 zip m4
+
+      - name: Make info.py executable
+        run: chmod +x project/info.py
+
+      - name: Build qagame linux64
+        run: PLATFORM=linux64 VARIANT=release make -j$(nproc) MODULES="src/base src/game"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jaymod-quick-test-linux64
+          path: build.linux64-release/game/qagame.mp.x86_64.so
+
+      - name: Step summary
+        run: |
+          echo "## Quick Test Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Module | File |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| linux64  | qagame | \`build.linux64-release/game/qagame.mp.x86_64.so\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          ls -lh build.linux64-release/game/qagame.mp.x86_64.so >> $GITHUB_STEP_SUMMARY
