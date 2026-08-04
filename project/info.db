@@ -42,6 +42,18 @@ platformName = Windows
 
 platformName = OSX
 
+::osx64
+
+platformName = macOS (x86_64)
+
+::osx-arm64
+
+platformName = macOS (ARM64)
+
+::linux-aarch64
+
+platformName = Linux (AArch64)
+
 ::windows
 
 platformName = Windows

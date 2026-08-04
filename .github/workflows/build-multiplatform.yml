@@ -102,3 +102,78 @@ jobs:
             build.mingw64-release/game/qagame_mp_x64.dll
             build.mingw64-release/cgame/cgame_mp_x64.dll
             build.mingw64-release/ui/ui_mp_x64.dll
+
+  build-linux-aarch64:
+    name: Build linux-aarch64 (cross-compile)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential python3 zip m4 gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+      - name: Make info.py executable
+        run: chmod +x project/info.py
+
+      - name: Build linux-aarch64 release
+        run: PLATFORM=linux-aarch64 make -j$(nproc) release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jaymod-linux-aarch64
+          path: |
+            build.linux-aarch64-release/game/qagame.mp.aarch64.so
+            build.linux-aarch64-release/cgame/cgame.mp.aarch64.so
+            build.linux-aarch64-release/ui/ui.mp.aarch64.so
+
+  build-osx64:
+    name: Build macOS x86_64
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: brew install m4
+
+      - name: Make info.py executable
+        run: chmod +x project/info.py
+
+      - name: Build osx64 release
+        run: PLATFORM=osx64 make -j$(sysctl -n hw.logicalcpu) release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jaymod-osx64
+          path: |
+            build.osx64-release/game/qagame.mp.x86_64.dylib
+            build.osx64-release/cgame/cgame.mp.x86_64.dylib
+            build.osx64-release/ui/ui.mp.x86_64.dylib
+
+  build-osx-arm64:
+    name: Build macOS ARM64 (Apple Silicon)
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: brew install m4
+
+      - name: Make info.py executable
+        run: chmod +x project/info.py
+
+      - name: Build osx-arm64 release
+        run: PLATFORM=osx-arm64 make -j$(sysctl -n hw.logicalcpu) release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jaymod-osx-arm64
+          path: |
+            build.osx-arm64-release/game/qagame.mp.arm64.dylib
+            build.osx-arm64-release/cgame/cgame.mp.arm64.dylib
+            build.osx-arm64-release/ui/ui.mp.arm64.dylib
