@@ -17,7 +17,7 @@ $(MODULE.PKG.out.bin): $(MODULE.PKG.stage/)%: $(PROJECT/)pkg/%
 
 $(MODULE.PKG.out.m4): $(MODULE.PKG.stage/)%: $(PROJECT/)pkg/%.m4
 	m4 -I $(BUILD/)m4 $< > $@
-ifneq ($(PROJECT.platformName),OSX)
+ifneq ($(PROJECT.platspecific),osx)
 	chmod --reference=$< $@
 endif
 
@@ -31,7 +31,7 @@ $(MODULE.PKG.pk3):
 .PHONY: $(MODULE.PKG.tar)
 $(MODULE.PKG.tar):
 	$(call print.HEADER,CREATING,$@)
-ifneq ($(PROJECT.platformName),OSX)
+ifneq ($(PROJECT.platformNamef),osx)
 	$(call fn.cp,$(MODULE.GAME.so),$(MODULE.PKG.stage/))
 else
 	unzip -o -d $(MODULE.PKG.stage/) $(MODULE.GAME.so)

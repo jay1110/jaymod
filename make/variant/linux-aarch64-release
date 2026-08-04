@@ -1,4 +1,4 @@
 CXX.O = 1
-CXX.fnStrip = strip $(1)
+CXX.fnStrip = /usr/bin/aarch64-linux-gnu-strip $(1)
 
 CXX.static = 1

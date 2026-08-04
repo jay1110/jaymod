@@ -308,7 +308,7 @@ class Project:
             print('#define JAYMOD_packageBasev   "' + this.packageBasev + '"')
             print('#define JAYMOD_pk3            "' + this.pk3 + '"')
             print()
-            print('#define JAYMOD_' + this.platformNamef.upper())
+            print('#define JAYMOD_' + re.sub('[^0-9A-Z_]', '_', this.platformNamef.upper()))
             print('#define JAYMOD_' + this.buildStability.upper())
 
         if (mode == 3):

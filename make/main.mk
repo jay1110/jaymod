@@ -18,14 +18,17 @@ include $(MODULES:%=$(PROJECT/)%.defs)
 
 ###############################################################################
 
+# Derived from the platform key (PROJECT.platformNamef) rather than the
+# human-readable PROJECT.platformName, so that arch-suffixed platforms such as
+# linux-aarch64, osx64 and osx-arm64 still select the correct source subdirs.
 PROJECT.platspecific = unknown
-ifeq ($(PROJECT.platformName),Linux)
+ifneq ($(filter linux%,$(PROJECT.platformNamef)),)
     PROJECT.platspecific = linux
 endif
-ifeq ($(PROJECT.platformName),OSX)
+ifneq ($(filter osx%,$(PROJECT.platformNamef)),)
     PROJECT.platspecific = osx
 endif
-ifeq ($(PROJECT.platformName),Windows)
+ifneq ($(filter mingw% windows%,$(PROJECT.platformNamef)),)
     PROJECT.platspecific = win32
 endif
 
