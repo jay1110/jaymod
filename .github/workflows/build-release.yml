@@ -228,7 +228,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: jaymod-pak
-          path: build.linux64-release/jaymod-2.2.0/jaymod-*.pk3
+          # Version-independent glob so the path survives version bumps.
+          path: build.linux64-release/jaymod-*/jaymod-*.pk3
 
   create-release:
     name: Create GitHub Release

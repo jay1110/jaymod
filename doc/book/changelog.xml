@@ -1,6 +1,14 @@
 <appendix id="changelog">
 <title>Changelog</title>
 
+<section id="changelog.221">
+<title>2.2.1</title>
+<orderedlist spacing="compact">
+    <?dbfo label-width="2.2em"?>
+    &changelog221;
+</orderedlist>
+</section>
+
 <section id="changelog.220">
 <title>2.2.0</title>
 <orderedlist spacing="compact">

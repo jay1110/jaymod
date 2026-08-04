@@ -9,7 +9,7 @@ irc       = irc.freenode.net #jaymod
 
 versionMajor = 2
 versionMinor = 2
-versionPoint = 0
+versionPoint = 1
 
 buildDate    = enable
 buildRelease = false

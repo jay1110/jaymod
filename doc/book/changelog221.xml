@@ -1,0 +1,6 @@
+<listitem>
+<simpara>
+    <emphasis role="touch">Fixed:</emphasis>
+    parallel builds could create the pk3 and tar.gz packages before the game modules were linked, which broke the macOS builds.
+</simpara>
+</listitem>
