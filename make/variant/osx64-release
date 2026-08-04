@@ -1,4 +1,7 @@
 CXX.O = 1
-CXX.fnStrip = strip $(1)
+# Mach-O bundles must only have their local symbols stripped; a full strip
+# fails with "symbols referenced by indirect symbol table entries that can't
+# be stripped" and would also remove vmMain/dllEntry.
+CXX.fnStrip = strip -x $(1)
 
 CXX.static = 1
