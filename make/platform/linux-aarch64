@@ -11,6 +11,7 @@ AR  = /usr/bin/aarch64-linux-gnu-ar
 
 CXX.D       = JAYMOD_LINUX_AARCH64
 CXX.opt.BIT =
+CXX.opt.O   = -O3 -ffast-math
 
 ###############################################################################
 

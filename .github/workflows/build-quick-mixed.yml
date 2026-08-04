@@ -29,7 +29,7 @@ jobs:
         run: chmod +x project/info.py
 
       - name: Build linux64 qagame release
-        run: PLATFORM=linux64 make -j$(nproc) release MODULES="src/lua src/sqlite3 src/base src/game"
+        run: PLATFORM=linux64 make -j$(nproc) release MODULES="src/base src/game"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -51,10 +51,10 @@ jobs:
         run: chmod +x project/info.py
 
       - name: Build mingw32 cgame + ui release
-        run: PLATFORM=mingw make -j$(nproc) release MODULES="src/lua src/sqlite3 src/base src/cgame src/ui"
+        run: PLATFORM=mingw make -j$(nproc) release MODULES="src/base src/cgame src/ui"
 
       - name: Build mingw64 cgame + ui release
-        run: PLATFORM=mingw64 make -j$(nproc) release MODULES="src/lua src/sqlite3 src/base src/cgame src/ui"
+        run: PLATFORM=mingw64 make -j$(nproc) release MODULES="src/base src/cgame src/ui"
 
       - name: Upload mingw32 artifact
         uses: actions/upload-artifact@v4
