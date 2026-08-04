@@ -1,0 +1,33 @@
+include make/platform/linux64
+
+###############################################################################
+
+# Requires an installed Android NDK; point ANDROID_NDK_HOME (or NDK_ROOT) at it.
+NDK_ROOT      ?= $(ANDROID_NDK_HOME)
+NDK_TOOLCHAIN  = $(NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64
+NDK_API       ?= 21
+
+###############################################################################
+
+IDMODULE.suffix = .mp.android.arm64-v8a.so
+
+###############################################################################
+
+CXX = $(NDK_TOOLCHAIN)/bin/aarch64-linux-android$(NDK_API)-clang++
+AR  = $(NDK_TOOLCHAIN)/bin/llvm-ar
+
+CXX.D = JAYMOD_ANDROID_ARM64 ANDROID
+CXX.l = log
+
+CXX.opt.BIT    =
+CXX.opt.O      = -O3 -ffast-math
+CXX.opt.W      = -w
+CXX.opt.static =
+
+CXX.ldopts.exe = -static-libstdc++
+CXX.ldopts.so  = -shared -static-libstdc++
+
+###############################################################################
+
+SPECIALS.name  = android-arm64
+SPECIALS.build = build.android-arm64

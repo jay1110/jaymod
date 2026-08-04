@@ -1,0 +1,52 @@
+include make/platform/linux64
+
+###############################################################################
+
+# Builds cgame, ui and qagame as WebAssembly using the Emscripten toolchain.
+# Requires the Emscripten SDK on PATH (source emsdk_env.sh), which provides
+# em++ and emar.
+EMXX ?= em++
+EMAR ?= emar
+
+###############################################################################
+
+# The ".so" naming keeps the modules loadable through the engine's existing
+# dlopen() based module loader.
+IDMODULE.suffix = .mp.wasm32.so
+
+###############################################################################
+
+# Emscripten resolves libc/libm/dlopen symbols from the MAIN_MODULE at load
+# time, so the SIDE_MODULEs must not link any explicit libraries.
+DYNLOAD.l  =
+MATH.l     =
+IPHLPAPI.l =
+ADVAPI.l   =
+WS2_32.l   =
+
+###############################################################################
+
+CXX = $(EMXX)
+AR  = $(EMAR)
+
+CXX.D = JAYMOD_WASM
+CXX.l =
+
+CXX.opt.BIT    =
+CXX.opt.O      = -O3 -ffast-math
+CXX.opt.W      = -w
+CXX.opt.static =
+
+# Each module is linked as a SIDE_MODULE so that a MAIN_MODULE engine build can
+# load it at runtime, exactly like the native .so/.dll modules on every other
+# platform. Hidden visibility (inherited from linux64) is essential here:
+# Emscripten resolves every default-visibility symbol of a SIDE_MODULE through
+# one process-wide symbol table, and cgame, ui and qagame share a lot of source,
+# so identically named globals would otherwise collide across modules.
+CXX.ldopts.exe = -sSIDE_MODULE=1
+CXX.ldopts.so  = -sSIDE_MODULE=1
+
+###############################################################################
+
+SPECIALS.name  = wasm
+SPECIALS.build = build.wasm

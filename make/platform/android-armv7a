@@ -1,0 +1,21 @@
+include make/platform/android-arm64
+
+###############################################################################
+
+IDMODULE.suffix = .mp.android.armeabi-v7a.so
+
+###############################################################################
+
+CXX = $(NDK_TOOLCHAIN)/bin/armv7a-linux-androideabi$(NDK_API)-clang++
+
+CXX.D = JAYMOD_ANDROID_ARMV7A ANDROID
+
+# libc++ must stay shared on armeabi-v7a: statically linking it into more than
+# one module in the same process breaks unwinding and duplicates its globals.
+CXX.ldopts.exe =
+CXX.ldopts.so  = -shared
+
+###############################################################################
+
+SPECIALS.name  = android-armv7a
+SPECIALS.build = build.android-armv7a

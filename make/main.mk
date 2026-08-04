@@ -31,6 +31,11 @@ endif
 ifneq ($(filter mingw% windows%,$(PROJECT.platformNamef)),)
     PROJECT.platspecific = win32
 endif
+# Android (Bionic) and Emscripten both provide a POSIX environment, so they
+# reuse the linux platform-specific sources.
+ifneq ($(filter android% wasm%,$(PROJECT.platformNamef)),)
+    PROJECT.platspecific = linux
+endif
 
 ###############################################################################
 

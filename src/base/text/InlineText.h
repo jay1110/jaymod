@@ -29,9 +29,9 @@ public:
     InlineText  ( const void* );
     InlineText  ( const char* );
     InlineText  ( const string& );
-#if defined( JAYMOD_OSX ) || defined( JAYMOD_LINUX64 ) || defined( JAYMOD_LINUX_AARCH64 ) || defined( JAYMOD_OSX64 ) || defined( JAYMOD_OSX_ARM64 )
+#if defined( JAYMOD_DISTINCT_SIZE_T )
     InlineText  ( size_t );
-#endif // JAYMOD_OSX || JAYMOD_LINUX64
+#endif // JAYMOD_DISTINCT_SIZE_T
     ~InlineText ( );
 
     InlineText& operator=( const InlineText& );
@@ -50,9 +50,9 @@ public:
     InlineText& operator() ( const void* );
     InlineText& operator() ( const char* );
     InlineText& operator() ( const string& );
-#if defined( JAYMOD_OSX ) || defined( JAYMOD_LINUX64 ) || defined( JAYMOD_LINUX_AARCH64 ) || defined( JAYMOD_OSX64 ) || defined( JAYMOD_OSX_ARM64 )
+#if defined( JAYMOD_DISTINCT_SIZE_T )
     InlineText& operator() ( size_t );
-#endif // JAYMOD_OSX || JAYMOD_LINUX64
+#endif // JAYMOD_DISTINCT_SIZE_T
 
     ColorManipulator color;
     ios::fmtflags    flags;

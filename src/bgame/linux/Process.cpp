@@ -12,6 +12,18 @@
 
 #include <sys/time.h>
 #include <sys/types.h>
+#include <unistd.h>
+
+// Emscripten (browser sandbox) and Android (Bionic libc) provide neither
+// execinfo.h/backtrace() nor process signals a loadable game module could
+// usefully hook, so the signal machinery below is compiled for full POSIX
+// targets only. No-op implementations are provided further down, exactly like
+// the win32 platform sources do.
+#if !defined( __EMSCRIPTEN__ ) && !defined( __ANDROID__ )
+#    define JAYMOD_POSIX_SIGNALS
+#endif
+
+#if defined( JAYMOD_POSIX_SIGNALS )
 
 #ifdef _DEBUG
 #ifndef __USE_GNU
@@ -168,6 +180,8 @@ SigData sigList[] = {
 
 }
 
+#endif // JAYMOD_POSIX_SIGNALS
+
 //////////////////////////////////////////////////////////////////////////////
 
 Process::mstime_t
@@ -179,6 +193,8 @@ Process::mstime()
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+#if defined( JAYMOD_POSIX_SIGNALS )
 
 void
 Process::beginCriticalSection()
@@ -232,3 +248,35 @@ Process::signalShutdown()
         printf( "WARNING: failed to restore signal(%d) handler: error #%d\n", data->num, errno );
     }
 }
+
+#else // !JAYMOD_POSIX_SIGNALS
+
+//////////////////////////////////////////////////////////////////////////////
+
+void
+Process::beginCriticalSection()
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void
+Process::endCriticalSection()
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void
+Process::signalInit()
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void
+Process::signalShutdown()
+{
+}
+
+#endif // JAYMOD_POSIX_SIGNALS

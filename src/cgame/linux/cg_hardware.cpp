@@ -5,10 +5,24 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#if !defined( __EMSCRIPTEN__ )
 #include <linux/if.h>
+#endif
 
 #include <base/public.h>
 #include <bgame/q_shared.h>
+
+#if defined( __EMSCRIPTEN__ )
+
+// The browser sandbox exposes no network interfaces, so there is no hardware
+// address to report.
+bool
+GetMACAddress( string& mac ) {
+    mac = "";
+    return false;
+}
+
+#else
 
 bool
 GetMACAddress( string& mac ) {
@@ -61,3 +75,5 @@ GetMACAddress( string& mac ) {
     mac = out.str();
     return true;
 }
+
+#endif // __EMSCRIPTEN__

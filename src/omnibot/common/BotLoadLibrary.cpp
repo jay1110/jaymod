@@ -271,7 +271,7 @@ void Omnibot_FreeLibrary()
 	g_IsOmnibotLoaded = false;
 }
 #endif
-#elif defined __linux__ || ((defined __MACH__) && (defined __APPLE__))
+#elif defined __linux__ || defined __EMSCRIPTEN__ || ((defined __MACH__) && (defined __APPLE__))
 
 static int StringCompareNoCase(const char *s1, const char *s2)
 {
