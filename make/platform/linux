@@ -42,7 +42,7 @@ CXX.opt.g      = -g
 CXX.opt.pipe   = -pipe
 CXX.opt.p      = -p
 CXX.opt.static = -static-libgcc
-CXX.opt.std    = -fno-exceptions -fno-rtti
+CXX.opt.std    = -std=gnu++14 -fno-exceptions -fno-rtti
 CXX.opt.vis    = -fvisibility=hidden
 
 CXX.ldopts.exe =

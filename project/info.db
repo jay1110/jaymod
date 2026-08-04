@@ -26,7 +26,15 @@ repoLCDate = enable
 
 platformName = Linux
 
+::linux64
+
+platformName = Linux
+
 ::mingw
+
+platformName = Windows
+
+::mingw64
 
 platformName = Windows
 
