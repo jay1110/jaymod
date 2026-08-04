@@ -10,8 +10,7 @@ on:
         default: false
 
 permissions:
-  contents: write
-
+  contents: read
 jobs:
   build-linux64:
     name: Build linux64
