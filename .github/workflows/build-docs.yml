@@ -1,0 +1,40 @@
+name: Build Documentation
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y \
+            docbook-xsl xsltproc fop libxml2-utils python3 m4
+
+      - name: Make doc scripts executable
+        run: chmod +x doc/lib/*.py
+
+      - name: Make info.py executable
+        run: chmod +x project/info.py
+
+      - name: Build documentation
+        run: PLATFORM=linux64 make -j$(nproc) doc
+
+      - name: Upload HTML documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: jaymod-docs-html
+          path: build.linux64-release/doc/**/*.html
+          if-no-files-found: warn
+
+      - name: Upload PDF documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: jaymod-docs-pdf
+          path: build.linux64-release/doc/**/*.pdf
+          if-no-files-found: warn
