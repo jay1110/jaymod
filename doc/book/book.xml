@@ -51,6 +51,7 @@
 <!ENTITY changelog219 SYSTEM "changelog219.xml">
 <!ENTITY changelog2110 SYSTEM "changelog2110.xml">
 <!ENTITY changelog220 SYSTEM "changelog220.xml">
+<!ENTITY changelog221 SYSTEM "changelog221.xml">
 
 <!ENTITY feature.panzerwar      SYSTEM "panzerwar.xml">
 <!ENTITY feature.playdead       SYSTEM "playdead.xml">

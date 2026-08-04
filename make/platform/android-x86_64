@@ -1,0 +1,16 @@
+include make/platform/android-arm64
+
+###############################################################################
+
+IDMODULE.suffix = .mp.android.x86_64.so
+
+###############################################################################
+
+CXX = $(NDK_TOOLCHAIN)/bin/x86_64-linux-android$(NDK_API)-clang++
+
+CXX.D = JAYMOD_ANDROID_X86_64 ANDROID
+
+###############################################################################
+
+SPECIALS.name  = android-x86_64
+SPECIALS.build = build.android-x86_64

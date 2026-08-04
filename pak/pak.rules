@@ -19,7 +19,7 @@ $(MODULE.PAK.out.bin): $(MODULE.PAK.stage/)%: $(PROJECT/)pak/%
 
 $(MODULE.PAK.out.m4): $(MODULE.PAK.stage/)%: $(PROJECT/)pak/%.m4
 	m4 -I $(BUILD/)m4 $< > $@
-ifneq ($(PROJECT.platformName),OSX)
+ifneq ($(PROJECT.platspecific),osx)
 	chmod --reference=$< $@
 endif
 

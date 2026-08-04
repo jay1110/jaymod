@@ -7,6 +7,25 @@ pkg:: $(MODULE.PKG.tar)
 
 ###############################################################################
 
+# The pkg:: rules above are only guaranteed to run in the written order for a
+# serial build.  GNU make 3.81 -- still the /usr/bin/make shipped with Xcode --
+# starts the double-colon rules of a target concurrently under -j, which staged
+# the pk3 and tar.gz before the modules had been linked.  Spell out the real
+# prerequisites so the ordering holds on every make version.
+
+# Staging needs $(BUILD.dirs) and $(BUILD/)m4/project.m4, both produced by all.
+$(MODULE.PKG.out.bin): | all
+$(MODULE.PKG.out.m4): | all
+
+# The pk3 archives $(MODULE.PAK.stage/), which all populates with cgame and ui.
+$(MODULE.PKG.pk3): all
+
+# The tarball archives $(MODULE.PKG.stage/) and copies in the linked qagame.
+$(MODULE.PKG.tar): all
+$(MODULE.PKG.tar): $(MODULE.PKG.out.bin) $(MODULE.PKG.out.m4) $(MODULE.PKG.pk3)
+
+###############################################################################
+
 pkg.clean:: pak.clean
 	-rm -fr $(MODULE.PKG.stage/)
 
@@ -17,7 +36,7 @@ $(MODULE.PKG.out.bin): $(MODULE.PKG.stage/)%: $(PROJECT/)pkg/%
 
 $(MODULE.PKG.out.m4): $(MODULE.PKG.stage/)%: $(PROJECT/)pkg/%.m4
 	m4 -I $(BUILD/)m4 $< > $@
-ifneq ($(PROJECT.platformName),OSX)
+ifneq ($(PROJECT.platspecific),osx)
 	chmod --reference=$< $@
 endif
 
@@ -31,7 +50,9 @@ $(MODULE.PKG.pk3):
 .PHONY: $(MODULE.PKG.tar)
 $(MODULE.PKG.tar):
 	$(call print.HEADER,CREATING,$@)
-ifneq ($(PROJECT.platformName),OSX)
+# Only the legacy 'osx' platform wraps the module in a zipped .bundle; osx64 and
+# osx-arm64 link a plain Mach-O bundle which is copied like every other platform.
+ifneq ($(PROJECT.platformNamef),osx)
 	$(call fn.cp,$(MODULE.GAME.so),$(MODULE.PKG.stage/))
 else
 	unzip -o -d $(MODULE.PKG.stage/) $(MODULE.GAME.so)

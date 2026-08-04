@@ -33,6 +33,7 @@ CXX.opt.L   = $(call fnPrefix,-L,$(CXX.L) $($(CXX.inherit).CXX.L))
 CXX.opt.R   = $(call fnPrefix,-Xlinker -rpath ,$(CXX.R) $($(CXX.inherit).CXX.R))
 CXX.opt.U   = $(call fnPrefix,-U,$(CXX.U) $($(CXX.inherit).CXX.U))
 CXX.opt.l   = $(call fnPrefix,-l,$(CXX.l) $($(CXX.inherit).CXX.l))
+CXX.opt.fwork = $(call fnPrefix,-framework ,$(CXX.fwork) $($(CXX.inherit).CXX.fwork))
 
 CXX.arch       = x86_64
 CXX.opt.arch   = $(call fnPrefix,-arch ,$(CXX.arch))
@@ -59,6 +60,7 @@ CXX.L = $(BUILD/)
 CXX.R =
 CXX.U =
 CXX.l =
+CXX.fwork =
 
 CXX.ML     = 1
 CXX.NSA    = 1
@@ -115,6 +117,12 @@ CXX.fnCompileStatic = $(call print.STATIC,$(AR),$(1),$(2),$(AR) cq $(1) $(2))
 
 ###############################################################################
 
+# ar(1) on macOS does not write an archive symbol table; without ranlib the
+# linker rejects the archive with "archive has no table of contents".
+CXX.fnRanlib = $(call print.COMMAND.normal,$(RANLIB),$(1),$(RANLIB) $(1))
+
+###############################################################################
+
 CXX.fnLinkExe = $(call print.LINK,$(CXX),$(1),$(3),$(4),$(strip \
     $(CXX) \
     $(CXX.opt.arch) \
@@ -128,6 +136,7 @@ CXX.fnLinkExe = $(call print.LINK,$(CXX),$(1),$(3),$(4),$(strip \
     $(CXX.opt.R) \
     $(CXX.opt.L) \
     $(CXX.opt.l) \
+    $(CXX.opt.fwork) \
     $(CXX.fnLinkExe.>>) $($(CC.inherit).CC.fnLinkExe.>>) \
     ))
 
@@ -149,6 +158,7 @@ CXX.fnLinkSo = $(call print.LINK,$(CXX),$(1),$(2),$(strip \
     $(CXX.opt.R) \
     $(CXX.opt.L) \
     $(CXX.opt.l) \
+    $(CXX.opt.fwork) \
     $(CXX.fnLinkSo.>>) $($(CC.inherit).CC.fnLinkSo.>>) \
     ))
 

@@ -9,7 +9,7 @@ irc       = irc.freenode.net #jaymod
 
 versionMajor = 2
 versionMinor = 2
-versionPoint = 0
+versionPoint = 1
 
 buildDate    = enable
 buildRelease = false
@@ -53,6 +53,30 @@ platformName = macOS (ARM64)
 ::linux-aarch64
 
 platformName = Linux (AArch64)
+
+::android
+
+platformName = Android
+
+::android-arm64
+
+platformName = Android (arm64-v8a)
+
+::android-armv7a
+
+platformName = Android (armeabi-v7a)
+
+::android-x86
+
+platformName = Android (x86)
+
+::android-x86_64
+
+platformName = Android (x86_64)
+
+::wasm
+
+platformName = Emscripten (wasm32)
 
 ::windows
 

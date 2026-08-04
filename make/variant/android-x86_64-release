@@ -1,0 +1,2 @@
+CXX.O = 1
+CXX.fnStrip = $(NDK_TOOLCHAIN)/bin/llvm-strip $(1)
