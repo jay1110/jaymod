@@ -102,8 +102,8 @@ jobs:
             build.linux-aarch64-release/cgame/cgame.mp.aarch64.so
             build.linux-aarch64-release/ui/ui.mp.aarch64.so
 
-  build-osx64:
-    name: Build macOS x86_64
+  build-macos:
+    name: Build macOS Universal (x86_64 + arm64)
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -113,34 +113,43 @@ jobs:
         run: chmod +x project/info.py
       - name: Build osx64 release
         run: PLATFORM=osx64 make -j$(sysctl -n hw.logicalcpu) release
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: jaymod-osx64
-          path: |
-            build.osx64-release/game/qagame_mac
-            build.osx64-release/cgame/cgame_mac
-            build.osx64-release/ui/ui_mac
-
-  build-osx-arm64:
-    name: Build macOS ARM64 (Apple Silicon)
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: brew install m4
-      - name: Make info.py executable
-        run: chmod +x project/info.py
       - name: Build osx-arm64 release
         run: PLATFORM=osx-arm64 make -j$(sysctl -n hw.logicalcpu) release
-      - name: Upload artifact
+      - name: Create universal binaries
+        run: |
+          set -eu
+
+          # osx64 and osx-arm64 use separate build trees and each link a plain
+          # Mach-O bundle named <module>_mac, so the two slices can be merged
+          # directly with lipo without any intermediate unwrapping.
+          mkdir -p artifacts/macos-universal
+
+          for module in game/qagame cgame/cgame ui/ui; do
+            name="$(basename "$module")_mac"
+            x86_file="build.osx64-release/$(dirname "$module")/$name"
+            arm_file="build.osx-arm64-release/$(dirname "$module")/$name"
+
+            if [ ! -f "$x86_file" ]; then
+              echo "error: missing x86_64 binary $x86_file"
+              exit 1
+            fi
+            if [ ! -f "$arm_file" ]; then
+              echo "error: missing arm64 binary $arm_file"
+              exit 1
+            fi
+
+            echo "Creating universal binary for $name"
+            lipo -create "$x86_file" "$arm_file" -output "artifacts/macos-universal/$name"
+            lipo -info "artifacts/macos-universal/$name"
+          done
+
+          ls -la artifacts/macos-universal/
+      - name: Upload universal artifact
         uses: actions/upload-artifact@v4
         with:
-          name: jaymod-osx-arm64
-          path: |
-            build.osx-arm64-release/game/qagame_mac
-            build.osx-arm64-release/cgame/cgame_mac
-            build.osx-arm64-release/ui/ui_mac
+          name: jaymod-macos-universal
+          path: artifacts/macos-universal/*_mac
+          if-no-files-found: error
 
   build-android:
     name: Build Android ${{ matrix.abi }}
@@ -234,7 +243,7 @@ jobs:
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [build-linux64, build-linux32, build-linux-aarch64, build-windows, build-osx64, build-osx-arm64, build-android, build-wasm, build-pak]
+    needs: [build-linux64, build-linux32, build-linux-aarch64, build-windows, build-macos, build-android, build-wasm, build-pak]
     if: ${{ inputs.create_release }}
     permissions:
       contents: write
