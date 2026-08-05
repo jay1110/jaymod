@@ -31,7 +31,13 @@
 
 // Largest number of arguments any ET syscall takes, excluding the syscall
 // number itself. BOTLIB_AAS_PREDICT_CLIENT_MOVEMENT, the widest one, uses 13.
-#define WASM_SYSCALL_MAXARGS 16
+// The forwarder always reads this many arguments because the syscall number is
+// only known at runtime; this mirrors what the engine does for QVM calls and is
+// safe under Emscripten, where varargs live in a caller allocated stack buffer.
+// Trailing slots that the caller did not supply hold indeterminate values and
+// are ignored by the engine, which only inspects the arguments of the syscall
+// it dispatches.
+#define WASM_SYSCALL_MAXARGS 13
 
 typedef intptr_t (*WasmSyscallPtr)( intptr_t* );
 
