@@ -5,10 +5,24 @@
 
 static int (QDECL *engine)( int arg, ... ) = (int (QDECL *)( int, ...))-1;
 
+#if defined( JAYMOD_WASM )
+
+#include <bgame/wasm_syscall.h>
+
+extern "C" LF_PUBLIC void
+dllEntry( WasmSyscallPtr ptr ) {
+	wasmSyscallEngine = ptr;
+	engine = wasmSyscallForward;
+}
+
+#else
+
 extern "C" LF_PUBLIC void
 dllEntry( int (QDECL *syscallptr)( int arg,... ) ) {
 	engine = syscallptr;
 }
+
+#endif
 
 int PASSFLOAT( float x ) {
 	float	floatTemp;

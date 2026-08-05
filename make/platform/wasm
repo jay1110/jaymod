@@ -37,6 +37,14 @@ CXX.opt.O      = -O3 -ffast-math
 CXX.opt.W      = -w
 CXX.opt.static =
 
+# SIDE_MODULEs must be position independent and, since cgame, ui and qagame
+# share a lot of source, must not export anything but the module entry points.
+CXX.opt.PIC    = -fPIC
+CXX.opt.vis    = -fvisibility=hidden
+
+CXX.PIC = 1
+CXX.vis = 1
+
 # Each module is linked as a SIDE_MODULE so that a MAIN_MODULE engine build can
 # load it at runtime, exactly like the native .so/.dll modules on every other
 # platform. Hidden visibility (inherited from linux64) is essential here:

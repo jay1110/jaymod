@@ -9,7 +9,15 @@ extern string g_OmnibotLibPath;
 ///////////////////////////////////////////////////////////////////////////////
 
 namespace {
-    const char* const __LIB_SUFFIX = ".so";
+#if defined( JAYMOD_WASM )
+    // Emscripten SIDE_MODULEs carry an architecture tag, exactly like the mod
+    // modules themselves (qagame.mp.wasm32.so). The plain ".so" name is kept as
+    // a fallback so a natively named bot library is still found.
+    const char* const __LIB_SUFFIX[] = { ".wasm32.so", ".so" };
+#else
+    const char* const __LIB_SUFFIX[] = { ".so" };
+#endif
+    const size_t      __LIB_SUFFIX_COUNT = sizeof(__LIB_SUFFIX) / sizeof(__LIB_SUFFIX[0]);
     const char* const __OMNI_DIR   = "omni-bot";
     const char* const __OMNI_LOG   = "OMNIBOT:";
     const char        __PATHSEP    = '/';
@@ -34,11 +42,7 @@ Omnibot_LoadLibrary( const int version, const char* const libbase, const char* c
 {
     G_Printf( "%s loader version 0.66\n", __OMNI_LOG );
 
-    const string libname = string( libbase ) + __LIB_SUFFIX;
-
     // prepare list of path names
-    set<string>   dirSet;
-    list<string*> dirList;
 
     // add custom dir
     if (customdir && customdir[0])
@@ -93,27 +97,29 @@ Omnibot_LoadLibrary( const int version, const char* const libbase, const char* c
     }
 
     // attempt loading
-    for ( list<string>::iterator it = __dirList.begin(); it != end; it++ ) {
+    for ( list<string>::iterator it = __dirList.begin(); it != end && !__handle; it++ ) {
         const string& dir = *it;
 
-        string name = dir;
-        if (name.length() && name[ name.length()-1 ] != __PATHSEP)
-            name += __PATHSEP;
+        string prefix = dir;
+        if (prefix.length() && prefix[ prefix.length()-1 ] != __PATHSEP)
+            prefix += __PATHSEP;
 
-        name += libname;
+        for ( size_t i = 0; i < __LIB_SUFFIX_COUNT; i++ ) {
+            const string name = prefix + libbase + __LIB_SUFFIX[i];
 
-        __handle = dlopen( name.c_str(), RTLD_NOW );
-        if (!__handle) {
-            G_Printf( "%s load '%s': failure: %s\n", __OMNI_LOG, name.c_str(), dlerror() );
-            continue;
+            __handle = dlopen( name.c_str(), RTLD_NOW );
+            if (!__handle) {
+                G_Printf( "%s load '%s': failure: %s\n", __OMNI_LOG, name.c_str(), dlerror() );
+                continue;
+            }
+
+            // success
+            G_Printf( "%s load '%s': success\n", __OMNI_LOG, name.c_str() );
+
+            // update buffer indicating bot path
+            g_OmnibotLibPath = name;
+            break;
         }
-
-        // success
-        G_Printf( "%s load '%s': success\n", __OMNI_LOG, name.c_str() );
-
-        // update buffer indicating bot path
-        g_OmnibotLibPath = name;
-        break;
     }
 
     if (!__handle)

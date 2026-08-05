@@ -6,10 +6,24 @@
 // this file is only included when building a dll
 // g_syscalls.asm is included instead when building a qvm
 
+#if defined( JAYMOD_WASM )
+
+#include <bgame/wasm_syscall.h>
+
+extern "C" LF_PUBLIC void
+dllEntry( WasmSyscallPtr ptr ) {
+	wasmSyscallEngine = ptr;
+	Engine::ptr = wasmSyscallForward;
+}
+
+#else
+
 extern "C" LF_PUBLIC void
 dllEntry( Engine::Ptr ptr ) {
 	Engine::ptr = ptr;
 }
+
+#endif
 
 int PASSFLOAT( float x ) {
 	float	floatTemp;
