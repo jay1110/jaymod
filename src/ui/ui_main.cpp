@@ -236,7 +236,7 @@ qboolean _UI_IsFullscreen( void );
 
 #if defined( JAYMOD_WASM )
 #include <bgame/wasm_vmmain.h>
-static int
+static intptr_t
 vmMainInternal
 #else
 extern "C" LF_PUBLIC int

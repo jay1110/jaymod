@@ -28,7 +28,7 @@ This is the only way control passes into the module.
 */
 #if defined( JAYMOD_WASM )
 #include <bgame/wasm_vmmain.h>
-static int
+static intptr_t
 vmMainInternal
 #else
 extern "C" LF_PUBLIC int

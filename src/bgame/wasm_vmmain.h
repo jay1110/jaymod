@@ -11,8 +11,8 @@
  * the callee's type exactly traps with "indirect call signature mismatch".
  *
  * The engine calls vmMain with a fixed signature of one command plus sixteen
- * intptr_t arguments, so every module must export exactly that signature and
- * forward to its own handler.
+ * intptr_t arguments (seventeen intptr_t parameters in total), so every module
+ * must export exactly that signature and forward to its own handler.
  *
  * Each module also exports vmWasmAbi1() as a marker so the engine can tell
  * that the module was built against this ABI.
