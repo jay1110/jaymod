@@ -259,7 +259,7 @@ jobs:
         id: version
         run: |
           chmod +x project/info.py
-          VERSION=$(PLATFORM=linux64 python3 project/info.py -mk project/info.db | grep 'PROJECT.version' | cut -d= -f2 | tr -d ' ')
+          VERSION=$(PLATFORM=linux64 python3 project/info.py -mk project/info.db | grep -m1 '^PROJECT\.version  *=' | cut -d= -f2 | tr -d ' ')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Create release archives
