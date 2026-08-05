@@ -51,8 +51,14 @@ CXX.vis = 1
 # Emscripten resolves every default-visibility symbol of a SIDE_MODULE through
 # one process-wide symbol table, and cgame, ui and qagame share a lot of source,
 # so identically named globals would otherwise collide across modules.
-CXX.ldopts.exe = -sSIDE_MODULE=1
-CXX.ldopts.so  = -sSIDE_MODULE=1
+#
+# The module entry points are named explicitly so that they survive dead code
+# elimination: nothing inside the module references vmMain, dllEntry or the
+# vmWasmAbi1 ABI marker, they are only ever called by the engine.
+WASM.exports = -sEXPORTED_FUNCTIONS=_vmMain,_dllEntry,_vmWasmAbi1
+
+CXX.ldopts.exe = -sSIDE_MODULE=1 $(WASM.exports)
+CXX.ldopts.so  = -sSIDE_MODULE=1 $(WASM.exports)
 
 ###############################################################################
 

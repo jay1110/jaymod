@@ -614,8 +614,15 @@ This is the only way control passes into the module.
 This must be the very first function compiled into the .q3vm file
 ================
 */
+#if defined( JAYMOD_WASM )
+#include <bgame/wasm_vmmain.h>
+static intptr_t
+vmMainInternal
+#else
 extern "C" LF_PUBLIC intptr_t
-vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6 ) {
+vmMain
+#endif
+      ( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6 ) {
 	switch ( command ) {
 	case GAME_INIT:
 		Bot_Interface_InitHandles();
@@ -671,6 +678,21 @@ vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5,
 
 	return -1;
 }
+
+#if defined( JAYMOD_WASM )
+
+// The engine calls vmMain through a WebAssembly indirect call, which requires
+// an exact function type match; export the fixed ABI signature and forward.
+extern "C" LF_PUBLIC intptr_t
+vmMain( JAYMOD_WASM_VMMAIN_ABI_ARGS ) {
+	JAYMOD_WASM_VMMAIN_UNUSED
+	(void)arg7; (void)arg8; (void)arg9; (void)arg10; (void)arg11;
+	return vmMainInternal( command, arg0, arg1, arg2, arg3, arg4, arg5, arg6 );
+}
+
+JAYMOD_WASM_ABI_MARKER
+
+#endif
 
 void QDECL G_Printf( const char *fmt, ... ) {
 	va_list		argptr;

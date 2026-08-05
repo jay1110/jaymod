@@ -234,8 +234,15 @@ void _UI_MouseEvent( int dx, int dy );
 void _UI_Refresh( int realtime );
 qboolean _UI_IsFullscreen( void );
 
+#if defined( JAYMOD_WASM )
+#include <bgame/wasm_vmmain.h>
+static int
+vmMainInternal
+#else
 extern "C" LF_PUBLIC int
-vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9, int arg10, int arg11  ) {
+vmMain
+#endif
+      ( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9, int arg10, int arg11  ) {
 
 	switch ( command ) {
 	case UI_GETAPIVERSION:
@@ -289,6 +296,20 @@ vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5,
 	return -1;
 }
 
+#if defined( JAYMOD_WASM )
+
+// The engine calls vmMain through a WebAssembly indirect call, which requires
+// an exact function type match; export the fixed ABI signature and forward.
+extern "C" LF_PUBLIC intptr_t
+vmMain( JAYMOD_WASM_VMMAIN_ABI_ARGS ) {
+	JAYMOD_WASM_VMMAIN_UNUSED
+	return vmMainInternal( command, arg0, arg1, arg2, arg3, arg4, arg5,
+	                       arg6, arg7, arg8, arg9, arg10, arg11 );
+}
+
+JAYMOD_WASM_ABI_MARKER
+
+#endif
 
 
 void AssetCache() {
