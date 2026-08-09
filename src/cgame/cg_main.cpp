@@ -26,8 +26,15 @@ vmMain
 This is the only way control passes into the module.
 ================
 */
+#if defined( JAYMOD_WASM )
+#include <bgame/wasm_vmmain.h>
+static intptr_t
+vmMainInternal
+#else
 extern "C" LF_PUBLIC int
-vmMain( int cmd, 
+vmMain
+#endif
+          ( int cmd, 
             int arg0, 
             int arg1, 
             int arg2, 
@@ -84,6 +91,21 @@ vmMain( int cmd,
 
 	return -1;
 }
+
+#if defined( JAYMOD_WASM )
+
+// The engine calls vmMain through a WebAssembly indirect call, which requires
+// an exact function type match; export the fixed ABI signature and forward.
+extern "C" LF_PUBLIC intptr_t
+vmMain( JAYMOD_WASM_VMMAIN_ABI_ARGS ) {
+	JAYMOD_WASM_VMMAIN_UNUSED
+	return vmMainInternal( command, arg0, arg1, arg2, arg3, arg4, arg5,
+	                       arg6, arg7, arg8, arg9, arg10, arg11 );
+}
+
+JAYMOD_WASM_ABI_MARKER
+
+#endif
 
 cg_t				cg;
 cgs_t				cgs;
