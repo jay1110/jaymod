@@ -308,7 +308,10 @@ jobs:
               return 1
             fi
             mkdir -p "$dest"
-            find "artifacts/$artifact" -type f -exec cp {} "$dest/" \;
+            # The linux64 artifact also carries the temporary base pk3 used
+            # below. Never expose that single-platform archive in the unified
+            # package; only copy standalone platform binaries here.
+            find "artifacts/$artifact" -type f ! -name '*.pk3' -exec cp {} "$dest/" \;
             echo "ok: $artifact -> $2 ($(find "$dest" -type f | wc -l) file(s))"
           }
 
@@ -361,6 +364,20 @@ jobs:
           echo "Created $pk3_name with $cgame_count cgame and $ui_count ui modules"
           unzip -l "release/$pk3_name"
 
+          # Ship exactly the same universal pk3 both as a standalone artifact
+          # and inside the multiplatform bundle. Previously the bundle kept the
+          # linux-only base pk3, yielding a different pure checksum.
+          cp "release/$pk3_name" "release/jaymod-multiplatform/$pk3_name"
+          (cd release && sha256sum "$pk3_name" > "$pk3_name.sha256")
+          cp "release/$pk3_name.sha256" "release/jaymod-multiplatform/$pk3_name.sha256"
+          bundled_pk3_count="$(find release/jaymod-multiplatform -type f -name '*.pk3' | wc -l)"
+          if [ "$bundled_pk3_count" -ne 1 ]; then
+            echo "error: expected exactly one pk3 in the multiplatform bundle, found $bundled_pk3_count"
+            find release/jaymod-multiplatform -type f -name '*.pk3' -print
+            exit 1
+          fi
+          cmp "release/$pk3_name" "release/jaymod-multiplatform/$pk3_name"
+
           echo '=== release package structure ==='
           find release/jaymod-multiplatform -type f | sort
 
@@ -373,5 +390,6 @@ jobs:
           name: jaymod-multiplatform
           path: |
             release/jaymod-2.2.0-*-g*.pk3
+            release/jaymod-2.2.0-*-g*.pk3.sha256
             release/jaymod-multiplatform-*.zip
           if-no-files-found: error
