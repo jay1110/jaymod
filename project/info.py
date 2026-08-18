@@ -61,6 +61,26 @@ def fetchRepoData():
 
 ###############################################################################
 
+def fetchGitBuildId():
+    """Return the ET: Legacy-style development build suffix."""
+    try:
+        count = subprocess.check_output(
+            ['git', 'rev-list', '--count', 'HEAD'],
+            stderr=subprocess.DEVNULL,
+            text=True).strip()
+        commit = subprocess.check_output(
+            ['git', 'rev-parse', '--short=7', 'HEAD'],
+            stderr=subprocess.DEVNULL,
+            text=True).strip()
+    except (OSError, subprocess.CalledProcessError):
+        return ''
+
+    if not count or not commit:
+        return ''
+    return '%s-g%s' % (count, commit)
+
+###############################################################################
+
 class InfoException(Exception):
     pass
   
@@ -241,12 +261,20 @@ class Project:
             this.versionPoint,
             this.variant )
 
-        this.pk3 = "%s-%s%d.%d.%d.pk3" % (
-            this.namef,
+        pk3Version = "%s%d.%d.%d" % (
             this.nightly,
             this.versionMajor,
             this.versionMinor,
             this.versionPoint )
+
+        if (not toBoolean(this.buildRelease)):
+            gitBuildId = fetchGitBuildId()
+            if gitBuildId:
+                pk3Version += '-' + gitBuildId
+
+        this.pk3 = "%s-%s.pk3" % (
+            this.namef,
+            pk3Version )
 
     def dump(this, mode):
         if (mode == 1):
