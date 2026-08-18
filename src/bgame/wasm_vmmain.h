@@ -24,18 +24,13 @@
 
 #include <stdint.h>
 
-///////////////////////////////////////////////////////////////////////////////
+#define JAYMOD_WASM_VMMAIN_ABI_ARGS \
+    intptr_t command, intptr_t arg0, intptr_t arg1, intptr_t arg2, \
+    intptr_t arg3, intptr_t arg4, intptr_t arg5, intptr_t arg6, \
+    intptr_t arg7, intptr_t arg8, intptr_t arg9, intptr_t arg10, \
+    intptr_t arg11
 
-#define JAYMOD_WASM_VMMAIN_ABI_ARGS                                           \
-    intptr_t command, intptr_t arg0, intptr_t arg1, intptr_t arg2,            \
-    intptr_t arg3, intptr_t arg4, intptr_t arg5, intptr_t arg6,               \
-    intptr_t arg7, intptr_t arg8, intptr_t arg9, intptr_t arg10,              \
-    intptr_t arg11, intptr_t arg12, intptr_t arg13, intptr_t arg14,           \
-    intptr_t arg15
-
-// Unused trailing arguments still have to be named and accepted; silence them.
-#define JAYMOD_WASM_VMMAIN_UNUSED                                             \
-    (void)arg12; (void)arg13; (void)arg14; (void)arg15;
+#define JAYMOD_WASM_VMMAIN_UNUSED
 
 // ABI marker: presence of this export tells the engine the module speaks the
 // fixed-signature vmMain / array-based dllEntry ABI described above.
